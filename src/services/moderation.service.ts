@@ -73,14 +73,14 @@ export const ModerationService = {
        RETURNING *
      `;
 
-    const { rows } = await pool.query<FlagRecord>(query, [
+    const { rows: insertedRows } = await pool.query<FlagRecord>(query, [
       entityType,
       entityId,
       flaggerId,
       reason,
     ]);
 
-    const flag = rows[0];
+    const flag = insertedRows[0];
 
     // Check if content should be auto-hidden (3+ flags)
     await this.checkAutoHide(entityType, entityId);

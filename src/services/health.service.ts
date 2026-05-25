@@ -137,14 +137,21 @@ export class HealthService {
    * Internal full health check
    */
   private static async performFullCheck(): Promise<DetailedHealthStatus> {
-    const [dbCheck, redisCheck, horizonCheck, queueCheck, tablesCheck] =
-      await Promise.all([
-        this.checkDatabase(),
-        this.checkRedis(),
-        this.checkHorizon(),
-        this.checkBullMQ(),
-        this.checkDatabaseTables(),
-      ]);
+    const [
+      dbCheck,
+      redisCheck,
+      horizonCheck,
+      queueCheck,
+      tablesCheck,
+      analyticsViewsCheck,
+    ] = await Promise.all([
+      this.checkDatabase(),
+      this.checkRedis(),
+      this.checkHorizon(),
+      this.checkBullMQ(),
+      this.checkDatabaseTables(),
+      this.checkAnalyticsViews(),
+    ]);
 
     // Critical components for readiness: all must not be 'unhealthy'
     const criticalComponents = [dbCheck, redisCheck, horizonCheck];
@@ -236,11 +243,11 @@ export class HealthService {
     const start = Date.now();
     try {
       const requiredViews = [
-        'mv_daily_revenue',
-        'mv_daily_users',
-        'mv_session_stats',
-        'mv_top_mentors',
-        'mv_asset_distribution',
+        "mv_daily_revenue",
+        "mv_daily_users",
+        "mv_session_stats",
+        "mv_top_mentors",
+        "mv_asset_distribution",
       ];
 
       const query = `
@@ -258,7 +265,7 @@ export class HealthService {
 
       if (allExist) {
         return {
-          status: 'healthy',
+          status: "healthy",
           responseTimeMs,
           details: { totalViews: requiredViews.length },
         };
@@ -266,18 +273,18 @@ export class HealthService {
 
       const missing = requiredViews.filter((v) => !foundViews.includes(v));
       return {
-        status: 'degraded',
+        status: "degraded",
         responseTimeMs,
         error: `Missing ${missing.length} analytics view(s)`,
         details: {
           missingViews: missing,
           totalViews: requiredViews.length,
-          message: 'Run migration 015_analytics_views.sql to create views',
+          message: "Run migration 015_analytics_views.sql to create views",
         },
       };
     } catch (err: any) {
       return {
-        status: 'degraded',
+        status: "degraded",
         responseTimeMs: Date.now() - start,
         error: err.message,
       };
