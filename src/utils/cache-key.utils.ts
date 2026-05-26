@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
 /**
  * Cache key utilities.
@@ -12,7 +12,7 @@ import crypto from 'crypto';
  */
 function hashParams(params: Record<string, any>): string {
   const json = JSON.stringify(params);
-  return crypto.createHash('md5').update(json).digest('hex').substring(0, 8);
+  return crypto.createHash("md5").update(json).digest("hex").substring(0, 8);
 }
 
 export const CacheKeys = {
@@ -28,7 +28,8 @@ export const CacheKeys = {
    * Uses hash of query parameters to create compact, unique keys
    * @example CacheKeys.mentorSearch({ search: 'John', expertise: 'React', minRate: 50 })
    */
-  mentorSearch: (params: Record<string, any>) => `mm:mentors:search:${hashParams(params)}`,
+  mentorSearch: (params: Record<string, any>) =>
+    `mm:mentors:search:${hashParams(params)}`,
 
   // Session cache keys
   /**
@@ -49,8 +50,15 @@ export const CacheKeys = {
    * @param assetCode - Asset code (e.g., 'XLM', 'USD')
    * @param assetIssuer - Asset issuer (optional)
    */
-  stellarAssetBalance: (publicKey: string, assetCode: string, assetIssuer?: string) =>
-    `mm:balance:${publicKey}:${assetCode}${assetIssuer ? `:${assetIssuer}` : ''}`,
+  stellarAssetBalance: (
+    publicKey: string,
+    assetCode: string,
+    assetIssuer?: string,
+  ) =>
+    `mm:balance:${publicKey}:${assetCode}${assetIssuer ? `:${assetIssuer}` : ""}`,
+
+  // Recommendation cache keys
+  recommendations: (learnerId: string) => `mm:recommendations:${learnerId}`,
 
   // Admin cache keys
   adminStats: () => `mm:admin:stats`,

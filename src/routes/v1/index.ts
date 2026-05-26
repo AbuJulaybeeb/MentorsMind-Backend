@@ -24,6 +24,7 @@ import escrowRoutes from "../escrow.routes";
 import walletRoutes from "../wallets.routes";
 import consentRoutes from "../consent.routes";
 import integrationsRoutes from "../integrations.routes";
+import recommendationsRoutes from "../recommendations.routes";
 import { AdminService } from "../../services/admin.service";
 import { BookingsService } from "../../services/bookings.service";
 import { logger } from "../../utils/logger";
@@ -63,5 +64,6 @@ router.use("/disputes", disputesRoutes);
 router.use("/escrow", escrowRoutes);
 router.use("/wallets", walletRoutes);
 router.use("/integrations", integrationsRoutes);
+router.use("/recommendations", recommendationsRoutes);
 
 export default router;

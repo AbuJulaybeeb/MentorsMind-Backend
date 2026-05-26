@@ -12,6 +12,7 @@ import reviewsRoutes from "./reviews.routes";
 import conversationsRoutes from "./conversations.routes";
 import messageSearchRoutes from "./messageSearch.routes";
 import integrationsRoutes from "./integrations.routes";
+import recommendationsRoutes from "./recommendations.routes";
 import { AdminService } from "../services/admin.service";
 import { BookingsService } from "../services/bookings.service";
 import { VerificationService } from "../services/verification.service";
@@ -21,8 +22,6 @@ import {
   SUPPORTED_VERSIONS,
 } from "../config/api-versions.config";
 import { asyncHandler } from "../utils/asyncHandler.utils";
-import { HealthController } from "../controllers/health.controller";
-import { HealthService } from "../services/health.service";
 import { logger } from "../utils/logger.utils";
 import { JwksController } from "../controllers/jwks.controller";
 
@@ -61,6 +60,7 @@ router.use("/reviews", reviewsRoutes);
 router.use("/conversations", conversationsRoutes);
 router.use("/messages", messageSearchRoutes);
 router.use("/integrations", integrationsRoutes);
+router.use("/recommendations", recommendationsRoutes);
 
 // JWKS public endpoint — no auth required
 router.get("/.well-known/jwks.json", asyncHandler(JwksController.getJwks));

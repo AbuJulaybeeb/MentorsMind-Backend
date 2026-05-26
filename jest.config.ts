@@ -43,6 +43,7 @@ const config: Config = {
     "^.+\\.ts$": [
       "ts-jest",
       {
+        diagnostics: { warnOnly: true },
         tsconfig: {
           target: "ES2022",
           module: "commonjs",
