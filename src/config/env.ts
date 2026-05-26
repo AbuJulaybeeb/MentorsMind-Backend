@@ -137,6 +137,13 @@ const envSchema = z.object({
   APP_BASE_URL: z.string().url().default("http://localhost:5000"),
   APP_CLIENT_URL: z.string().url().default("http://localhost:3000"),
   FRONTEND_URL: z.string().url().default("http://localhost:3000"),
+
+  // Deep Linking
+  DEEP_LINK_SCHEME: z.string().default("mentorminds"),
+  IOS_BUNDLE_ID: z.string().default("com.mentorminds.app"),
+  ANDROID_PACKAGE_NAME: z.string().default("com.mentorminds.app"),
+  IOS_APP_STORE_URL: z.string().url().optional(),
+  ANDROID_PLAY_STORE_URL: z.string().url().optional(),
 });
 
 // ---------------------------------------------------------------------------

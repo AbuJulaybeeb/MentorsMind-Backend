@@ -26,6 +26,7 @@ import walletRoutes from "../wallets.routes";
 import consentRoutes from "../consent.routes";
 import integrationsRoutes from "../integrations.routes";
 import notesRoutes from "../notes.routes";
+import deepLinkRoutes from "../deepLink.routes";
 import { BookingsService } from "../../services/bookings.service";
 import { logger } from "../../utils/logger";
 import { VerificationService } from "../../services/verification.service";
@@ -62,6 +63,7 @@ router.use("/disputes", disputesRoutes);
 router.use("/escrow", escrowRoutes);
 router.use("/wallets", walletRoutes);
 router.use("/integrations", integrationsRoutes);
+router.use("/dl", deepLinkRoutes);
 router.use("/", notesRoutes);
 
 export default router;
