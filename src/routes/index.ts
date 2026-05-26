@@ -14,6 +14,8 @@ import conversationsRoutes from "./conversations.routes";
 import messageSearchRoutes from "./messageSearch.routes";
 import integrationsRoutes from "./integrations.routes";
 import consentRoutes from "./consent.routes";
+import transcriptionSearchRoutes from "./transcriptionSearch.routes";
+import transcriptionRoutes from "./transcription.routes";
 import { BookingsService } from "../services/bookings.service";
 import { notificationCleanupService } from "../services/notification-cleanup.service";
 import {
@@ -56,6 +58,8 @@ router.use("/conversations", conversationsRoutes);
 router.use("/messages", messageSearchRoutes);
 router.use("/integrations", integrationsRoutes);
 router.use("/consent", consentRoutes);
+router.use("/bookings/:id/transcription", transcriptionRoutes);
+router.use("/transcriptions", transcriptionSearchRoutes);
 
 // JWKS public endpoint — no auth required
 router.get("/.well-known/jwks.json", asyncHandler(JwksController.getJwks));
