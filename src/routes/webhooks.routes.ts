@@ -13,6 +13,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth.middleware';
 import { validate } from '../middleware/validation.middleware';
+import { webhookAuth } from '../middleware/webhook-auth.middleware';
 import { WebhooksController } from '../controllers/webhooks.controller';
 import {
   createWebhookSchema,
@@ -32,5 +33,19 @@ router.put('/:id',   validate(updateWebhookSchema),            WebhooksControlle
 router.delete('/:id', validate(webhookIdParamSchema),          WebhooksController.remove);
 router.get('/:id/deliveries', validate(webhookDeliveriesQuerySchema), WebhooksController.deliveries);
 router.post('/:id/test', validate(webhookIdParamSchema),       WebhooksController.test);
+// Publicly accessible but API Key protected
+router.post('/incoming', webhookAuth, WebhooksController.receive);
+
+// All other webhook routes require JWT authentication
+router.use(authenticate);
+
+router.post('/', WebhooksController.create);
+router.get('/', WebhooksController.list);
+router.get('/:id', WebhooksController.getOne);
+router.put('/:id', WebhooksController.update);
+router.delete('/:id', WebhooksController.remove);
+router.get('/:id/deliveries', WebhooksController.deliveries);
+router.post('/:id/test', WebhooksController.test);
+router.post('/:id/rotate-api-key', WebhooksController.rotateKey);
 
 export default router;
