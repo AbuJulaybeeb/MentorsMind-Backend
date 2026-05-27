@@ -1,3 +1,4 @@
+import { trackAndLogQuery } from '../middleware/queryLogger';
 import { Pool, PoolConfig } from "pg";
 import config from "./index";
 import { logger } from "../utils/logger";
@@ -63,4 +64,9 @@ pool.on("connect", (client) => {
   });
 });
 
+export const db = {
+  query: async (text: string, params?: any[]) => {
+    return await trackAndLogQuery(pool, text, params || []);
+  },
+};
 export default pool;
