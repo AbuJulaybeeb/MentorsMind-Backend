@@ -188,9 +188,28 @@ router.put(
  *       - bearerAuth: []
  *     parameters:
  *       - $ref: '#/components/schemas/UUIDParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason]
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 description: Reason for the suspension
+ *                 example: "Repeated policy violations"
+ *               expiresAt:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Optional expiry date (omit for indefinite suspension)
+ *                 example: "2026-06-30T00:00:00Z"
  *     responses:
  *       200:
  *         description: User suspended
+ *       400:
+ *         description: Reason is required
  *       404:
  *         description: User not found
  */
@@ -201,6 +220,45 @@ router.put(
     getEntityDetails: (req) => ({ type: "USER", id: req.params.id }),
   }),
   asyncHandler(AdminController.suspendUser),
+);
+
+/**
+ * @swagger
+ * /admin/users/{id}/ban:
+ *   put:
+ *     summary: Permanently ban a user account
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - $ref: '#/components/schemas/UUIDParam'
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [reason]
+ *             properties:
+ *               reason:
+ *                 type: string
+ *                 description: Reason for the permanent ban
+ *                 example: "Fraud and abuse of platform"
+ *     responses:
+ *       200:
+ *         description: User permanently banned
+ *       400:
+ *         description: Reason is required
+ *       404:
+ *         description: User not found
+ */
+router.put(
+  "/users/:id/ban",
+  auditLogMiddleware({
+    action: AuditAction.ADMIN_ACTION,
+    getEntityDetails: (req) => ({ type: "USER", id: req.params.id }),
+  }),
+  asyncHandler(AdminController.banUser),
 );
 
 /**
@@ -1210,6 +1268,36 @@ router.put(
   "/verifications/:id/request-more",
   validate(requestMoreInfoSchema),
   asyncHandler(VerificationController.requestMoreInfo),
+);
+
+/**
+ * @swagger
+ * /admin/webhooks/:deliveryId/retry:
+ *   post:
+ *     summary: Manually retry a failed webhook delivery
+ *     tags: [Admin, Webhooks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: deliveryId
+ *         in: path
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Retry scheduled successfully
+ *       400:
+ *         description: Cannot retry (already succeeded, max retries exceeded, etc.)
+ *       404:
+ *         description: Delivery not found
+ */
+router.post(
+  "/webhooks/:deliveryId/retry",
+  auditLogMiddleware({
+    action: AuditAction.ADMIN_ACTION,
+    getEntityDetails: (req) => ({ type: "WEBHOOK_DELIVERY", id: req.params.deliveryId }),
+  }),
+  asyncHandler(AdminController.retryWebhookDelivery),
 );
 
 /**
