@@ -53,6 +53,7 @@ const config = {
   },
 
   email: {
+    provider: env.EMAIL_PROVIDER,
     smtp: {
       host: env.SMTP_HOST,
       port: parseInt(env.SMTP_PORT, 10),
@@ -64,7 +65,16 @@ const config = {
       user: env.GMAIL_USER,
       pass: env.GMAIL_PASS,
     },
+    sendgrid: {
+      apiKey: env.SENDGRID_API_KEY,
+    },
+    mailgun: {
+      apiKey: env.MAILGUN_API_KEY,
+      domain: env.MAILGUN_DOMAIN,
+      host: env.MAILGUN_HOST,
+    },
     fromEmail: env.FROM_EMAIL,
+    webhookSecret: env.EMAIL_WEBHOOK_SECRET,
   },
 
   redis: {
