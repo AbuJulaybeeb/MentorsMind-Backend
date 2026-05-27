@@ -70,6 +70,7 @@ router.use("/disputes", disputesRoutes);
 router.use("/escrow", escrowRoutes);
 router.use("/wallets", walletRoutes);
 router.use("/integrations", integrationsRoutes);
+router.use("/webhooks", webhookRoutes);
 router.use("/dl", deepLinkRoutes);
 router.use("/notifications", notificationsRoutes);
 router.use("/", notesRoutes);
