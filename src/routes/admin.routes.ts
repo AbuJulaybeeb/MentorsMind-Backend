@@ -1214,6 +1214,36 @@ router.put(
 
 /**
  * @swagger
+ * /admin/webhooks/:deliveryId/retry:
+ *   post:
+ *     summary: Manually retry a failed webhook delivery
+ *     tags: [Admin, Webhooks]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: deliveryId
+ *         in: path
+ *         required: true
+ *         schema: { type: string, format: uuid }
+ *     responses:
+ *       200:
+ *         description: Retry scheduled successfully
+ *       400:
+ *         description: Cannot retry (already succeeded, max retries exceeded, etc.)
+ *       404:
+ *         description: Delivery not found
+ */
+router.post(
+  "/webhooks/:deliveryId/retry",
+  auditLogMiddleware({
+    action: AuditAction.ADMIN_ACTION,
+    getEntityDetails: (req) => ({ type: "WEBHOOK_DELIVERY", id: req.params.deliveryId }),
+  }),
+  asyncHandler(AdminController.retryWebhookDelivery),
+);
+
+/**
+ * @swagger
  * /api/v1/admin/consent/stats:
  *   get:
  *     summary: Aggregate consent rates by type (Admin only)

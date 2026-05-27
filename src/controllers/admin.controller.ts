@@ -11,6 +11,7 @@ import { IpFilterService } from "../services/ipFilter.service";
 import pool from "../config/database";
 import { keyRotationJob } from "../jobs/keyRotation.job";
 import { accountDeletionService } from "../services/accountDeletion.service";
+import { WebhookService } from "../services/webhook.service";
 
 export const AdminController = {
   /** GET /admin/stats */
@@ -547,20 +548,35 @@ export const AdminController = {
     try {
       const rule = await IpFilterService.addRule({
         ipRange,
-        ruleType: "allow",
-        context: "admin",
+        rule_type: "allow",
+        context: "global",
         reason,
-        adminId: req.user!.id,
-        ipAddress: extractIpAddress(req),
+        created_by: req.user!.userId,
       });
-      ResponseUtil.success(
-        res,
-        rule,
-        "Admin allowlist rule added successfully",
-        201,
-      );
+      ResponseUtil.success(res, rule, "Allowlist rule added successfully");
     } catch (err: any) {
       ResponseUtil.error(res, err.message, 400);
+    }
+  },
+
+  /** POST /admin/webhooks/:deliveryId/retry */
+  async retryWebhookDelivery(
+    req: AuthenticatedRequest,
+    res: Response,
+  ): Promise<void> {
+    const { deliveryId } = req.params;
+    const userId = req.user!.userId;
+
+    try {
+      const result = await WebhookService.retryDelivery(deliveryId, userId);
+      
+      if (result.success) {
+        ResponseUtil.success(res, null, result.message);
+      } else {
+        ResponseUtil.error(res, result.message, 400);
+      }
+    } catch (err: any) {
+      ResponseUtil.error(res, err.message, 500);
     }
   },
 };
