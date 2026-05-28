@@ -26,6 +26,7 @@ import {
 } from "../config/api-versions.config";
 import { asyncHandler } from "../utils/asyncHandler.utils";
 import { HealthController } from "../controllers/health.controller";
+import sessionFeedbackRoutes from "./session-feedback.routes";
 import { logger } from "../utils/logger.utils";
 import { JwksController } from "../controllers/jwks.controller";
 import { metricsRegistry } from "../config/metrics";
@@ -64,6 +65,7 @@ router.use("/bookings/:id/transcription", transcriptionRoutes);
 router.use("/transcriptions", transcriptionSearchRoutes);
 router.use("/webhooks/email", emailWebhookRoutes);
 router.use("/recordings", sessionRecordingRoutes);
+router.use("/feedback", sessionFeedbackRoutes);
 
 // JWKS public endpoint — no auth required
 router.get("/.well-known/jwks.json", asyncHandler(JwksController.getJwks));
