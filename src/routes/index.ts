@@ -5,6 +5,7 @@ import usersRoutes from "./users.routes";
 import exportRoutes from "./export.routes";
 import adminRoutes from "./admin.routes";
 import moderationRoutes from "./moderation.routes";
+import userModerationRoutes from "./user-moderation.routes";
 import bookingsRoutes from "./bookings.routes";
 import smartSchedulingRoutes from "./smart-scheduling.routes";
 import timezoneRoutes from "./timezone.routes";
@@ -19,6 +20,8 @@ import transcriptionSearchRoutes from "./transcriptionSearch.routes";
 import transcriptionRoutes from "./transcription.routes";
 import emailWebhookRoutes from "./emailWebhook.routes";
 import sessionRecordingRoutes from "./session-recording.routes";
+import subscriptionRoutes from "./subscriptions.routes";
+import taxRoutes from "./tax.routes";
 import { BookingsService } from "../services/bookings.service";
 import { notificationCleanupService } from "../services/notification-cleanup.service";
 import {
@@ -38,21 +41,21 @@ const router = Router();
 // Note: These services no longer create tables at runtime.
 // Table schema is managed exclusively by migration files.
 BookingsService.initialize().catch((err: unknown) => {
-  logger.error("Failed to initialize bookings service:", err);
+  logger.error("Failed to initialize bookings service:", { err });
 });
 
 // Initialize notification cleanup service (async, don't block)
 notificationCleanupService.initialize().catch((err: unknown) => {
-  logger.error("Failed to initialize notification cleanup service:", err);
+  logger.error("Failed to initialize notification cleanup service:", { err });
 });
 
 // Mount route modules
 router.use("/auth", authRoutes);
 router.use("/users", usersRoutes);
-router.use("/", exportRoutes);
 router.use("/admin", adminRoutes);
 router.use("/admin/moderation", moderationRoutes);
 router.use("/bookings", smartSchedulingRoutes);
+router.use("/user/moderation", userModerationRoutes);
 router.use("/bookings", bookingsRoutes);
 router.use("/timezones", timezoneRoutes);
 router.use("/mentors", mentorsRoutes);
@@ -66,6 +69,9 @@ router.use("/bookings/:id/transcription", transcriptionRoutes);
 router.use("/transcriptions", transcriptionSearchRoutes);
 router.use("/webhooks/email", emailWebhookRoutes);
 router.use("/recordings", sessionRecordingRoutes);
+router.use("/subscriptions", subscriptionRoutes);
+router.use("/tax", taxRoutes);
+router.use("/", exportRoutes);
 
 // JWKS public endpoint — no auth required
 router.get("/.well-known/jwks.json", asyncHandler(JwksController.getJwks));
