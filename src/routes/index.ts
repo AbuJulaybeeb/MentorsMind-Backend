@@ -49,7 +49,6 @@ notificationCleanupService.initialize().catch((err: unknown) => {
 // Mount route modules
 router.use("/auth", authRoutes);
 router.use("/users", usersRoutes);
-router.use("/", exportRoutes);
 router.use("/admin", adminRoutes);
 router.use("/admin/moderation", moderationRoutes);
 router.use("/user/moderation", userModerationRoutes);
@@ -66,6 +65,7 @@ router.use("/bookings/:id/transcription", transcriptionRoutes);
 router.use("/transcriptions", transcriptionSearchRoutes);
 router.use("/webhooks/email", emailWebhookRoutes);
 router.use("/recordings", sessionRecordingRoutes);
+router.use("/", exportRoutes);
 
 // JWKS public endpoint — no auth required
 router.get("/.well-known/jwks.json", asyncHandler(JwksController.getJwks));
