@@ -127,6 +127,13 @@ impl ReputationContract {
             panic!("SessionNotReleased");
         }
 
+        if mentor != escrow.mentor {
+            panic!("MentorMismatch");
+        }
+        if learner != escrow.learner {
+            panic!("LearnerMismatch");
+        }
+
         // Store review
         let record = ReviewRecord {
             session_id: session_id.clone(),
