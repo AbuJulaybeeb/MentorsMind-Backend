@@ -532,15 +532,16 @@ impl EscrowContract {
     /// - Caller fails authorization check
     pub fn release_funds(env: Env, caller: Address, escrow_id: u64) {
         let key = (symbol_short!("ESCROW"), escrow_id);
-        env.storage()
-            .persistent()
-            .extend_ttl(&key, ESCROW_TTL_THRESHOLD, ESCROW_TTL_BUMP);
 
         let mut escrow: Escrow = env
             .storage()
             .persistent()
             .get(&key)
             .expect("Escrow not found");
+
+        env.storage()
+            .persistent()
+            .extend_ttl(&key, ESCROW_TTL_THRESHOLD, ESCROW_TTL_BUMP);
 
         if escrow.status != EscrowStatus::Active {
             panic!("Escrow not active");
@@ -565,11 +566,12 @@ impl EscrowContract {
     }
     pub fn release_partial(env: Env, caller: Address, escrow_id: u64) {
         let key = (symbol_short!("ESCROW"), escrow_id);
+
+        let mut escrow: Escrow = env.storage().persistent().get(&key).expect("Escrow not found");
+
         env.storage()
             .persistent()
             .extend_ttl(&key, ESCROW_TTL_THRESHOLD, ESCROW_TTL_BUMP);
-
-        let mut escrow: Escrow = env.storage().persistent().get(&key).expect("Escrow not found");
 
         if escrow.status != EscrowStatus::Active {
             panic!("Escrow not active");
@@ -665,9 +667,10 @@ impl EscrowContract {
 
     pub fn admin_release(env: Env, escrow_id: u64) {
         let key = (symbol_short!("ESCROW"), escrow_id);
-        env.storage().persistent().extend_ttl(&key, ESCROW_TTL_THRESHOLD, ESCROW_TTL_BUMP);
 
         let mut escrow = Self::load_escrow(&env, &key);
+
+        env.storage().persistent().extend_ttl(&key, ESCROW_TTL_THRESHOLD, ESCROW_TTL_BUMP);
         if escrow.status != EscrowStatus::Active {
             panic!("Escrow not active");
         }
@@ -695,15 +698,16 @@ impl EscrowContract {
     /// - The auto-release window has not yet elapsed.
     pub fn try_auto_release(env: Env, escrow_id: u64) {
         let key = DataKey::Escrow(escrow_id);
-        env.storage()
-            .persistent()
-            .extend_ttl(&key, ESCROW_TTL_THRESHOLD, ESCROW_TTL_BUMP);
 
         let mut escrow: Escrow = env
             .storage()
             .persistent()
             .get(&key)
             .expect("Escrow not found");
+
+        env.storage()
+            .persistent()
+            .extend_ttl(&key, ESCROW_TTL_THRESHOLD, ESCROW_TTL_BUMP);
 
         if escrow.status != EscrowStatus::Active {
             panic!("Escrow not active");
