@@ -97,4 +97,12 @@ router.use("/referrals", referralRoutes);
 // Event Sourcing / Audit Trail routes
 router.use("/events", eventsRoutes);
 
+// Session Quality Analytics (issue #538)
+import sessionQualityRoutes from "../session-quality.routes";
+router.use("/session-quality", sessionQualityRoutes);
+
+// API Documentation Portal (issue #537)
+import apiDocsPortalRoutes from "../api-docs-portal.routes";
+router.use("/docs", apiDocsPortalRoutes);
+
 export default router;
