@@ -181,12 +181,17 @@ The project uses **Jest** with **Supertest** for comprehensive API integration t
 # Run all tests
 npm test
 
+# Run chaos engineering and failure injection unit tests
+npm run test:chaos
+
 # Run tests in watch mode (for development)
 npm run test:watch
 
 # Run tests with coverage report
 npm run test:coverage
 ```
+
+For resilience documentation and scenarios, see `docs/CHAOS_ENGINEERING.md`.
 
 ### Test Database Setup
 

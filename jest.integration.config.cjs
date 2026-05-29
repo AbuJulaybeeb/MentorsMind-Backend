@@ -1,0 +1,38 @@
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  rootDir: '.',
+  roots: ['<rootDir>/src'],
+  testMatch: ['**/*.integration.test.ts'],
+  globalSetup: '<rootDir>/src/__tests__/setup/globalSetup.ts',
+  globalTeardown: '<rootDir>/src/__tests__/setup/globalTeardown.ts',
+  setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup/integrationSetup.ts'],
+  transform: {
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: {
+        target: 'ES2022',
+        module: 'commonjs',
+        lib: ['ES2022'],
+        strict: false,
+        esModuleInterop: true,
+        skipLibCheck: true,
+        forceConsistentCasingInFileNames: true,
+        resolveJsonModule: true,
+        allowSyntheticDefaultImports: true,
+      },
+      diagnostics: false,
+    }],
+  },
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  maxWorkers: 1,
+  testTimeout: 60000,
+  clearMocks: true,
+  restoreMocks: true,
+  resetModules: false,
+  verbose: true,
+  forceExit: true,
+  detectOpenHandles: true,
+};
