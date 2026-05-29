@@ -24,6 +24,7 @@ import disputesRoutes from "../disputes.routes";
 import escrowRoutes from "../escrow.routes";
 import walletRoutes from "../wallets.routes";
 import consentRoutes from "../consent.routes";
+import complianceRoutes from "../compliance.routes";
 import bulkRoutes from "../bulk.routes";
 import integrationsRoutes from "../integrations.routes";
 import notesRoutes from "../notes.routes";
@@ -63,6 +64,7 @@ router.use("/goals", goalRoutes);
 router.use("/learners", learnerRoutes);
 router.use("/", exportRoutes);
 router.use("/consent", consentRoutes);
+router.use("/compliance", complianceRoutes);
 router.use("/bulk", bulkRoutes);
 
 // Apply IP whitelisting to all admin routes
