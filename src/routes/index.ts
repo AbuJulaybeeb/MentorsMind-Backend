@@ -1,6 +1,11 @@
 import { Router } from "express";
 import { ResponseUtil } from "../utils/response.utils";
+import cdnRoutes from "./cdn.routes";
+import assessmentRoutes from "./assessment.routes";
 import authRoutes from "./auth.routes";
+import loyaltyRoutes from "./loyalty.routes";
+import platformHealthRoutes from "./platform-health.routes";
+import mentorMatchingV2Routes from "./mentor-matching-v2.routes";
 import usersRoutes from "./users.routes";
 import exportRoutes from "./export.routes";
 import adminRoutes from "./admin.routes";
@@ -31,6 +36,7 @@ import {
 import { asyncHandler } from "../utils/asyncHandler.utils";
 import { HealthController } from "../controllers/health.controller";
 import sessionFeedbackRoutes from "./session-feedback.routes";
+import featureFlagRoutes from "./feature-flag.routes";
 import calendarSyncRoutes from "./calendar-sync.routes";
 import developerRoutes from "./developer.routes";
 import { logger } from "../utils/logger.utils";
@@ -53,7 +59,12 @@ notificationCleanupService.initialize().catch((err: unknown) => {
 });
 
 // Mount route modules
+router.use("/assessments", assessmentRoutes);
+router.use("/loyalty", loyaltyRoutes);
+router.use("/platform-health", platformHealthRoutes);
+router.use("/mentor-matching", mentorMatchingV2Routes);
 router.use("/auth", authRoutes);
+router.use("/cdn", cdnRoutes);
 router.use("/users", usersRoutes);
 router.use("/admin", adminRoutes);
 router.use("/admin/moderation", moderationRoutes);
@@ -74,6 +85,7 @@ router.use("/webhooks/email", emailWebhookRoutes);
 router.use("/recordings", sessionRecordingRoutes);
 router.use(sessionSummaryRoutes);
 router.use("/feedback", sessionFeedbackRoutes);
+router.use("/feature-flags", featureFlagRoutes);
 router.use("/calendar/sync", calendarSyncRoutes);
 router.use("/developer", developerRoutes);
 router.use("/subscriptions", subscriptionRoutes);
