@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { ResponseUtil } from "../utils/response.utils";
+import assessmentRoutes from "./assessment.routes";
 import authRoutes from "./auth.routes";
 import loyaltyRoutes from "./loyalty.routes";
 import platformHealthRoutes from "./platform-health.routes";
@@ -56,6 +57,7 @@ notificationCleanupService.initialize().catch((err: unknown) => {
 });
 
 // Mount route modules
+router.use("/assessments", assessmentRoutes);
 router.use("/loyalty", loyaltyRoutes);
 router.use("/platform-health", platformHealthRoutes);
 router.use("/mentor-matching", mentorMatchingV2Routes);
