@@ -54,6 +54,37 @@ export const QUEUE_NAMES = {
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
 
+export enum JobType {
+  EMAIL = "email",
+  PAYMENT = "payment",
+  NOTIFICATION = "notification",
+  REPORT = "report",
+  ANALYTICS = "analytics",
+  BLOCKCHAIN = "blockchain",
+}
+
+export interface JobBackoffConfig {
+  type: 'fixed' | 'exponential';
+  delay: number;
+}
+
+export interface JobConfig {
+  name: string;
+  priority?: number;
+  attempts?: number;
+  backoff?: JobBackoffConfig;
+  timeout?: number;
+  removeOnComplete?: boolean | { count: number };
+  removeOnFail?: boolean | { count: number };
+}
+
+export const JOB_RATE_LIMITS = {
+  EMAIL: { max: 60, duration: 60_000 },
+  NOTIFICATIONS: { max: 120, duration: 60_000 },
+} as const;
+
+export type JobRateLimit = (typeof JOB_RATE_LIMITS)[keyof typeof JOB_RATE_LIMITS];
+
 /** Worker concurrency per queue. */
 export const CONCURRENCY = {
   EMAIL: 10,
