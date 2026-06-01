@@ -2,6 +2,7 @@ import { Router } from "express";
 import { ResponseUtil } from "../utils/response.utils";
 import authRoutes from "./auth.routes";
 import platformHealthRoutes from "./platform-health.routes";
+import mentorMatchingV2Routes from "./mentor-matching-v2.routes";
 import usersRoutes from "./users.routes";
 import exportRoutes from "./export.routes";
 import adminRoutes from "./admin.routes";
@@ -55,6 +56,7 @@ notificationCleanupService.initialize().catch((err: unknown) => {
 
 // Mount route modules
 router.use("/platform-health", platformHealthRoutes);
+router.use("/mentor-matching", mentorMatchingV2Routes);
 router.use("/auth", authRoutes);
 router.use("/users", usersRoutes);
 router.use("/admin", adminRoutes);
