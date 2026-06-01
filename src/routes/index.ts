@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { ResponseUtil } from "../utils/response.utils";
+import cdnRoutes from "./cdn.routes";
 import assessmentRoutes from "./assessment.routes";
 import authRoutes from "./auth.routes";
 import loyaltyRoutes from "./loyalty.routes";
@@ -63,6 +64,7 @@ router.use("/loyalty", loyaltyRoutes);
 router.use("/platform-health", platformHealthRoutes);
 router.use("/mentor-matching", mentorMatchingV2Routes);
 router.use("/auth", authRoutes);
+router.use("/cdn", cdnRoutes);
 router.use("/users", usersRoutes);
 router.use("/admin", adminRoutes);
 router.use("/admin/moderation", moderationRoutes);
