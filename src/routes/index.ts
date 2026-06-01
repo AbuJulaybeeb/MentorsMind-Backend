@@ -35,6 +35,7 @@ import {
 import { asyncHandler } from "../utils/asyncHandler.utils";
 import { HealthController } from "../controllers/health.controller";
 import sessionFeedbackRoutes from "./session-feedback.routes";
+import featureFlagRoutes from "./feature-flag.routes";
 import calendarSyncRoutes from "./calendar-sync.routes";
 import developerRoutes from "./developer.routes";
 import { logger } from "../utils/logger.utils";
@@ -82,6 +83,7 @@ router.use("/webhooks/email", emailWebhookRoutes);
 router.use("/recordings", sessionRecordingRoutes);
 router.use(sessionSummaryRoutes);
 router.use("/feedback", sessionFeedbackRoutes);
+router.use("/feature-flags", featureFlagRoutes);
 router.use("/calendar/sync", calendarSyncRoutes);
 router.use("/developer", developerRoutes);
 router.use("/subscriptions", subscriptionRoutes);
