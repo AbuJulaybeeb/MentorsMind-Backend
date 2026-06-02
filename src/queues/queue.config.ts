@@ -7,5 +7,10 @@ export {
   defaultJobOptions,
   QUEUE_NAMES,
   CONCURRENCY,
+  JOB_RATE_LIMITS,
+  JobConfig,
+  JobType,
+  JobBackoffConfig,
+  JobRateLimit,
 } from "../config/queue";
 export type { QueueName } from "../config/queue";

@@ -1,10 +1,7 @@
-import { Queue } from 'bullmq';
-import {
-  redisConnection,
-  defaultJobOptions,
-  QUEUE_NAMES,
-} from './queue.config';
+import { traceStore } from '../middleware/tracing.middleware';
 import type { EmailRequest } from '../services/email.service';
+import { createManagedQueue, buildJobOptions, JobConfig } from './queue.manager';
+import { JOB_RATE_LIMITS, QUEUE_NAMES } from './queue.config';
 
 export interface EmailJobData extends EmailRequest {
   jobType: 'send-email';
@@ -12,31 +9,33 @@ export interface EmailJobData extends EmailRequest {
   correlationId?: string;
 }
 
-export const emailQueue = new Queue<EmailJobData>(QUEUE_NAMES.EMAIL, {
-  connection: redisConnection,
-  defaultJobOptions,
+export const emailQueue = createManagedQueue<EmailJobData>(QUEUE_NAMES.EMAIL, {
+  limiter: JOB_RATE_LIMITS.EMAIL,
 });
-
-import { traceStore } from '../middleware/tracing.middleware';
 
 /**
  * Enqueue an email send job.
  * @param data - Email request payload
- * @param priority - Optional BullMQ priority (lower = higher priority)
+ * @param priorityOrConfig - Optional BullMQ priority or advanced job config
  */
 export async function enqueueEmail(
   data: EmailRequest,
-  priority?: number,
+  priorityOrConfig?: number | Partial<JobConfig>,
 ): Promise<void> {
+  const options: Partial<JobConfig> =
+    typeof priorityOrConfig === 'number'
+      ? { priority: priorityOrConfig }
+      : priorityOrConfig ?? {};
+
   const context = traceStore.getStore();
   await emailQueue.add(
-    'send-email',
-    { 
-      ...data, 
+    options.name ?? 'send-email',
+    {
+      ...data,
       jobType: 'send-email',
       requestId: context?.requestId,
       correlationId: context?.correlationId,
     },
-    { priority },
+    buildJobOptions(options),
   );
 }
