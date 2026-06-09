@@ -1,4 +1,4 @@
-import pool from "../config/database";
+import { db } from "../config/database";
 import { logger } from "../utils/logger";
 
 export interface Payment {
@@ -12,26 +12,10 @@ export interface Payment {
 }
 
 export const PaymentModel = {
-  async initializeTable(): Promise<void> {
-    // This is now handled by transactions table, but keeping the method for compatibility
-    const query = `
-      CREATE TABLE IF NOT EXISTS transactions (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID NOT NULL,
-        amount DECIMAL(12, 2) NOT NULL,
-        currency VARCHAR(10) DEFAULT 'USD',
-        status VARCHAR(20) NOT NULL DEFAULT 'pending',
-        stellar_tx_hash TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `;
-    await pool.query(query);
-  },
-
   async findByUserId(userId: string): Promise<Payment[]> {
     const query =
       "SELECT * FROM transactions WHERE user_id = $1 ORDER BY created_at DESC;";
-    const { rows } = await pool.query<Payment>(query, [userId]);
+    const { rows } = await db.query(query, [userId]);
     return rows;
   },
 
@@ -43,7 +27,7 @@ export const PaymentModel = {
     if (userIds.length === 0) return [];
     const query =
       "SELECT * FROM transactions WHERE user_id = ANY($1) ORDER BY user_id, created_at DESC;";
-    const { rows } = await pool.query<Payment>(query, [userIds]);
+    const { rows } = await db.query(query, [userIds]);
     return rows;
   },
 
@@ -70,7 +54,7 @@ export const PaymentModel = {
     }
 
     query += " ORDER BY p.created_at DESC;";
-    const { rows } = await pool.query(query, params);
+    const { rows } = await db.query(query, params);
     return rows;
   },
   /**
@@ -79,18 +63,18 @@ export const PaymentModel = {
    */
   async deleteOlderThanYears(years: number): Promise<number> {
     try {
-      const { rowCount } = await pool.query(
+      const { rowCount } = await db.query(
         `DELETE FROM transactions WHERE created_at < NOW() - ($1::int * INTERVAL '1 year') RETURNING id;`,
         [years],
       );
 
       const deleted = rowCount ?? 0;
       if (deleted > 0) {
-        logger.info('PaymentModel: deleted old payments', { years, deleted });
+        logger.info("PaymentModel: deleted old payments", { years, deleted });
       }
       return deleted;
     } catch (error) {
-      logger.error('Failed to delete old payments:', error);
+      logger.error("Failed to delete old payments:", error);
       return 0;
     }
   },

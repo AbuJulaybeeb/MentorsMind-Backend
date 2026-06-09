@@ -1,6 +1,10 @@
-import pool from "../config/database";
+import pool, { db } from "../config/database";
 import { logger } from "../utils/logger";
-import { AISummaryService, ActionItem, SessionSummary } from "../services/ai-summary.service";
+import {
+  AISummaryService,
+  ActionItem,
+  SessionSummary,
+} from "../services/ai-summary.service";
 
 export interface SessionSummaryRecord {
   id: string;
@@ -39,61 +43,24 @@ export interface CreateSessionSummaryPayload {
  */
 export const SessionSummaryModel = {
   /**
-   * Initialize session_summaries table
-   */
-  async initializeTable(): Promise<void> {
-    const query = `
-      CREATE TYPE IF NOT EXISTS summary_status AS ENUM (
-        'pending',
-        'processing',
-        'completed',
-        'failed'
-      );
-
-      CREATE TABLE IF NOT EXISTS session_summaries (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
-        session_id UUID REFERENCES sessions(id) ON DELETE SET NULL,
-        
-        status summary_status NOT NULL DEFAULT 'pending',
-        ai_provider VARCHAR(50),
-        ai_model VARCHAR(100),
-        ai_confidence DECIMAL(3,2),
-        
-        key_topics JSONB DEFAULT '[]',
-        action_items JSONB DEFAULT '[]',
-        learning_outcomes JSONB DEFAULT '[]',
-        next_steps JSONB DEFAULT '[]',
-        recommendations JSONB DEFAULT '[]',
-        
-        transcript_id UUID REFERENCES session_transcripts(id) ON DELETE SET NULL,
-        source_text TEXT,
-        word_count INTEGER,
-        
-        processing_time_ms INTEGER,
-        error_message TEXT,
-        tokens_used INTEGER,
-        
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_session_summaries_booking_id ON session_summaries(booking_id);
-      CREATE INDEX IF NOT EXISTS idx_session_summaries_session_id ON session_summaries(session_id) WHERE session_id IS NOT NULL;
-      CREATE INDEX IF NOT EXISTS idx_session_summaries_status ON session_summaries(status);
-      CREATE INDEX IF NOT EXISTS idx_session_summaries_transcript_id ON session_summaries(transcript_id) WHERE transcript_id IS NOT NULL;
-    `;
-    await pool.query(query);
-  },
-
-  /**
    * Create a new session summary record (pending status)
    */
-  async create(payload: CreateSessionSummaryPayload): Promise<SessionSummaryRecord> {
-    const { bookingId, sessionId, transcriptId, transcriptText, sessionNotes, sessionTitle } = payload;
+  async create(
+    payload: CreateSessionSummaryPayload,
+  ): Promise<SessionSummaryRecord> {
+    const {
+      bookingId,
+      sessionId,
+      transcriptId,
+      transcriptText,
+      sessionNotes,
+      sessionTitle,
+    } = payload;
 
-    // Combine transcript and notes for source text
-    const sourceText = [transcriptText, sessionNotes].filter(Boolean).join("\n\n");
+    // Combine transcript, title, and notes for source text
+    const sourceText = [sessionTitle, transcriptText, sessionNotes]
+      .filter(Boolean)
+      .join("\n\n");
     const wordCount = sourceText ? sourceText.split(/\s+/).length : 0;
 
     const query = `
@@ -104,7 +71,7 @@ export const SessionSummaryModel = {
       RETURNING *
     `;
 
-    const { rows } = await pool.query<SessionSummaryRecord>(query, [
+    const { rows } = await db.query(query, [
       bookingId,
       sessionId || null,
       transcriptId || null,
@@ -118,7 +85,9 @@ export const SessionSummaryModel = {
   /**
    * Find session summary by booking ID
    */
-  async findByBookingId(bookingId: string): Promise<SessionSummaryRecord | null> {
+  async findByBookingId(
+    bookingId: string,
+  ): Promise<SessionSummaryRecord | null> {
     const query = "SELECT * FROM session_summaries WHERE booking_id = $1";
     const { rows } = await pool.query<SessionSummaryRecord>(query, [bookingId]);
     return rows[0] ?? null;
@@ -127,7 +96,9 @@ export const SessionSummaryModel = {
   /**
    * Find session summary by session ID
    */
-  async findBySessionId(sessionId: string): Promise<SessionSummaryRecord | null> {
+  async findBySessionId(
+    sessionId: string,
+  ): Promise<SessionSummaryRecord | null> {
     const query = "SELECT * FROM session_summaries WHERE session_id = $1";
     const { rows } = await pool.query<SessionSummaryRecord>(query, [sessionId]);
     return rows[0] ?? null;
@@ -145,14 +116,16 @@ export const SessionSummaryModel = {
   /**
    * Update summary status to processing
    */
-  async updateStatusToProcessing(id: string): Promise<SessionSummaryRecord | null> {
+  async updateStatusToProcessing(
+    id: string,
+  ): Promise<SessionSummaryRecord | null> {
     const query = `
       UPDATE session_summaries
       SET status = 'processing', updated_at = NOW()
       WHERE id = $1
       RETURNING *
     `;
-    const { rows } = await pool.query<SessionSummaryRecord>(query, [id]);
+    const { rows } = await db.query(query, [id]);
     return rows[0] ?? null;
   },
 
@@ -187,7 +160,7 @@ export const SessionSummaryModel = {
       RETURNING *
     `;
 
-    const { rows } = await pool.query<SessionSummaryRecord>(query, [
+    const { rows } = await db.query(query, [
       result.provider,
       result.model,
       result.summary.aiConfidence,
@@ -219,7 +192,7 @@ export const SessionSummaryModel = {
       RETURNING *
     `;
 
-    const { rows } = await pool.query<SessionSummaryRecord>(query, [
+    const { rows } = await db.query(query, [
       JSON.stringify(recommendations),
       id,
     ]);
@@ -230,7 +203,10 @@ export const SessionSummaryModel = {
   /**
    * Mark summary as failed with error message
    */
-  async markAsFailed(id: string, errorMessage: string): Promise<SessionSummaryRecord | null> {
+  async markAsFailed(
+    id: string,
+    errorMessage: string,
+  ): Promise<SessionSummaryRecord | null> {
     const query = `
       UPDATE session_summaries
       SET
@@ -241,7 +217,7 @@ export const SessionSummaryModel = {
       RETURNING *
     `;
 
-    const { rows } = await pool.query<SessionSummaryRecord>(query, [errorMessage, id]);
+    const { rows } = await db.query(query, [errorMessage, id]);
     return rows[0] ?? null;
   },
 
@@ -312,7 +288,9 @@ export const SessionSummaryModel = {
 
       // Generate recommendations
       try {
-        const recommendations = await AISummaryService.generateRecommendations(result.summary);
+        const recommendations = await AISummaryService.generateRecommendations(
+          result.summary,
+        );
         await this.updateRecommendations(summaryRecord.id, recommendations);
       } catch (recError) {
         logger.warn("SessionSummaryModel: Failed to generate recommendations", {

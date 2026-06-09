@@ -1,24 +1,14 @@
 import pool from "../config/database";
 import { logger } from "../utils/logger.utils";
 import { BookingsService } from "./bookings.service";
-import { SessionMilestoneService } from "./session-milestone.service";
 import { ContextualBookingService } from "./contextual-booking.service";
-
-export interface LegacyBookingMigration {
-  bookingId: string;
-  mentorId: string;
-  studentId: string;
-  suggestedMilestone?: string;
-  migrationStatus: 'pending' | 'completed' | 'skipped';
-  reason?: string;
-}
 
 export interface HybridModeConfig {
   mentorId: string;
   learningPathsEnabled: boolean;
   individualSessionsEnabled: boolean;
   autoLinkSessions: boolean;
-  defaultSessionType: 'milestone' | 'support' | 'assessment';
+  defaultSessionType: "milestone" | "support" | "assessment";
 }
 
 export const BookingCompatibilityService = {
@@ -27,13 +17,13 @@ export const BookingCompatibilityService = {
    */
   async initializeCompatibilityLayer(): Promise<void> {
     logger.info("Initializing booking compatibility layer");
-    
+
     // Verify existing booking functionality is preserved
     await this.validateExistingBookingFunctionality();
-    
+
     // Set up hybrid mode for all mentors initially
     await this.initializeHybridMode();
-    
+
     logger.info("Booking compatibility layer initialized successfully");
   },
 
@@ -42,23 +32,19 @@ export const BookingCompatibilityService = {
    */
   async validateExistingBookingFunctionality(): Promise<boolean> {
     try {
-      // Test basic booking operations without learning path integration
-      const testMentorId = 'test-mentor-id';
-      const testStudentId = 'test-student-id';
-      
       // Verify BookingsService methods are still accessible
       const methods = [
-        'createBooking',
-        'getBookingById', 
-        'getUserBookings',
-        'updateBooking',
-        'confirmBooking',
-        'completeBooking',
-        'cancelBooking'
+        "createBooking",
+        "getBookingById",
+        "getUserBookings",
+        "updateBooking",
+        "confirmBooking",
+        "completeBooking",
+        "cancelBooking",
       ];
 
       for (const method of methods) {
-        if (typeof BookingsService[method] !== 'function') {
+        if (typeof BookingsService[method] !== "function") {
           throw new Error(`BookingsService.${method} is not available`);
         }
       }
@@ -66,7 +52,9 @@ export const BookingCompatibilityService = {
       logger.info("Existing booking functionality validated");
       return true;
     } catch (error) {
-      logger.error("Existing booking functionality validation failed", { error });
+      logger.error("Existing booking functionality validation failed", {
+        error,
+      });
       return false;
     }
   },
@@ -75,31 +63,8 @@ export const BookingCompatibilityService = {
    * Initialize hybrid mode for all mentors
    */
   async initializeHybridMode(): Promise<void> {
-    // Create hybrid mode configuration table if not exists
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS mentor_hybrid_config (
-        mentor_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-        learning_paths_enabled BOOLEAN DEFAULT true,
-        individual_sessions_enabled BOOLEAN DEFAULT true,
-        auto_link_sessions BOOLEAN DEFAULT false,
-        default_session_type VARCHAR(20) DEFAULT 'support' CHECK (default_session_type IN ('milestone', 'support', 'assessment')),
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-      
-      CREATE INDEX IF NOT EXISTS idx_mentor_hybrid_config_mentor ON mentor_hybrid_config(mentor_id);
-    `);
-
-    // Initialize hybrid mode for existing mentors
-    await pool.query(`
-      INSERT INTO mentor_hybrid_config (mentor_id, learning_paths_enabled, individual_sessions_enabled, auto_link_sessions)
-      SELECT id, true, true, false
-      FROM users 
-      WHERE role = 'mentor' 
-      ON CONFLICT (mentor_id) DO NOTHING
-    `);
-
-    logger.info("Hybrid mode initialized for all mentors");
+    // Note: mentor_hybrid_config table and initial data are managed by migration 074
+    logger.info("Hybrid mode initialization handled by migrations");
   },
 
   /**
@@ -115,14 +80,14 @@ export const BookingCompatibilityService = {
          default_session_type as "defaultSessionType"
        FROM mentor_hybrid_config 
        WHERE mentor_id = $1`,
-      [mentorId]
+      [mentorId],
     );
 
     if (rows.length === 0) {
       // Create default config if not exists
       await pool.query(
         `INSERT INTO mentor_hybrid_config (mentor_id) VALUES ($1)`,
-        [mentorId]
+        [mentorId],
       );
 
       return {
@@ -130,7 +95,7 @@ export const BookingCompatibilityService = {
         learningPathsEnabled: true,
         individualSessionsEnabled: true,
         autoLinkSessions: false,
-        defaultSessionType: 'support'
+        defaultSessionType: "support",
       };
     }
 
@@ -142,7 +107,7 @@ export const BookingCompatibilityService = {
    */
   async updateHybridModeConfig(
     mentorId: string,
-    config: Partial<Omit<HybridModeConfig, 'mentorId'>>
+    config: Partial<Omit<HybridModeConfig, "mentorId">>,
   ): Promise<HybridModeConfig> {
     const fields: string[] = [];
     const values: any[] = [];
@@ -171,9 +136,9 @@ export const BookingCompatibilityService = {
 
       await pool.query(
         `UPDATE mentor_hybrid_config 
-         SET ${fields.join(', ')}
+         SET ${fields.join(", ")}
          WHERE mentor_id = $${idx}`,
-        values
+        values,
       );
     }
 
@@ -191,7 +156,11 @@ export const BookingCompatibilityService = {
     topic: string;
     notes?: string;
     milestoneId?: string; // Optional learning path integration
-  }): Promise<{ booking: any; milestoneMapping?: any; isLearningPathIntegrated: boolean }> {
+  }): Promise<{
+    booking: any;
+    milestoneMapping?: any;
+    isLearningPathIntegrated: boolean;
+  }> {
     const config = await this.getHybridModeConfig(data.mentorId);
 
     // If learning paths are disabled, use traditional booking
@@ -205,17 +174,18 @@ export const BookingCompatibilityService = {
       const result = await ContextualBookingService.createContextualBooking({
         ...data,
         sessionType: config.defaultSessionType,
-        contributesToCompletion: true
+        contributesToCompletion: true,
       });
       return { ...result, isLearningPathIntegrated: true };
     }
 
     // Auto-link to learning path if enabled
     if (config.autoLinkSessions) {
-      const recommendations = await ContextualBookingService.getBookingRecommendations(
-        data.mentorId,
-        data.menteeId
-      );
+      const recommendations =
+        await ContextualBookingService.getBookingRecommendations(
+          data.mentorId,
+          data.menteeId,
+        );
 
       if (recommendations.length > 0) {
         const topRecommendation = recommendations[0];
@@ -223,7 +193,7 @@ export const BookingCompatibilityService = {
           ...data,
           milestoneId: topRecommendation.milestoneId,
           sessionType: topRecommendation.sessionType,
-          contributesToCompletion: true
+          contributesToCompletion: true,
         });
         return { ...result, isLearningPathIntegrated: true };
       }
@@ -237,7 +207,10 @@ export const BookingCompatibilityService = {
   /**
    * Get available booking options for a student-mentor pair
    */
-  async getBookingOptions(mentorId: string, studentId: string): Promise<{
+  async getBookingOptions(
+    mentorId: string,
+    studentId: string,
+  ): Promise<{
     individualSessionsAvailable: boolean;
     learningPathsAvailable: boolean;
     learningPathContexts: any[];
@@ -250,16 +223,22 @@ export const BookingCompatibilityService = {
 
     if (config.learningPathsEnabled) {
       try {
-        learningPathContexts = await ContextualBookingService.getLearningPathContext(
-          mentorId,
-          studentId
-        );
-        recommendations = await ContextualBookingService.getBookingRecommendations(
-          mentorId,
-          studentId
-        );
+        learningPathContexts =
+          await ContextualBookingService.getLearningPathContext(
+            mentorId,
+            studentId,
+          );
+        recommendations =
+          await ContextualBookingService.getBookingRecommendations(
+            mentorId,
+            studentId,
+          );
       } catch (error) {
-        logger.warn("Error getting learning path context", { mentorId, studentId, error });
+        logger.warn("Error getting learning path context", {
+          mentorId,
+          studentId,
+          error,
+        });
       }
     }
 
@@ -267,14 +246,16 @@ export const BookingCompatibilityService = {
       individualSessionsAvailable: config.individualSessionsEnabled,
       learningPathsAvailable: config.learningPathsEnabled,
       learningPathContexts,
-      recommendations
+      recommendations,
     };
   },
 
   /**
    * Migrate existing mentor-student relationships to learning paths
    */
-  async suggestLearningPathMigration(mentorId: string): Promise<LegacyBookingMigration[]> {
+  async suggestLearningPathMigration(
+    mentorId: string,
+  ): Promise<LegacyBookingMigration[]> {
     // Get mentor's completed bookings with frequent students
     const { rows } = await pool.query(
       `SELECT 
@@ -292,7 +273,7 @@ export const BookingCompatibilityService = {
        GROUP BY b.mentee_id, u.first_name, u.last_name
        HAVING COUNT(*) >= 3
        ORDER BY COUNT(*) DESC, MAX(b.scheduled_at) DESC`,
-      [mentorId]
+      [mentorId],
     );
 
     const migrations: LegacyBookingMigration[] = [];
@@ -304,16 +285,16 @@ export const BookingCompatibilityService = {
          FROM path_enrollments pe
          JOIN learning_paths lp ON pe.learning_path_id = lp.id
          WHERE pe.student_id = $1 AND lp.mentor_id = $2`,
-        [row.mentee_id, mentorId]
+        [row.mentee_id, mentorId],
       );
 
       if (parseInt(existingEnrollments[0].count) > 0) {
         migrations.push({
-          bookingId: '', // Not applicable for relationship migration
+          bookingId: "", // Not applicable for relationship migration
           mentorId,
           studentId: row.mentee_id,
-          migrationStatus: 'completed',
-          reason: 'Student already enrolled in learning path'
+          migrationStatus: "completed",
+          reason: "Student already enrolled in learning path",
         });
         continue;
       }
@@ -332,7 +313,7 @@ export const BookingCompatibilityService = {
              AND lp.is_published = true
              AND (m.title ILIKE ANY($2) OR lp.title ILIKE ANY($2))
            LIMIT 1`,
-          [mentorId, topics.map(topic => `%${topic}%`)]
+          [mentorId, topics.map((topic) => `%${topic}%`)],
         );
 
         if (milestoneRows.length > 0) {
@@ -341,12 +322,12 @@ export const BookingCompatibilityService = {
       }
 
       migrations.push({
-        bookingId: '',
+        bookingId: "",
         mentorId,
         studentId: row.mentee_id,
         suggestedMilestone,
-        migrationStatus: 'pending',
-        reason: `${row.session_count} sessions completed, topics: ${topics.join(', ')}`
+        migrationStatus: "pending",
+        reason: `${row.session_count} sessions completed, topics: ${topics.join(", ")}`,
       });
     }
 
@@ -359,19 +340,22 @@ export const BookingCompatibilityService = {
   async migrateStudentToLearningPath(
     mentorId: string,
     studentId: string,
-    pathId: string
+    pathId: string,
   ): Promise<{ success: boolean; enrollmentId?: string; error?: string }> {
     try {
       // Import here to avoid circular dependency
       const { LearningPathService } = await import("./learning-path.service");
-      
-      const enrollment = await LearningPathService.enrollStudent(pathId, studentId);
-      
+
+      const enrollment = await LearningPathService.enrollStudent(
+        pathId,
+        studentId,
+      );
+
       logger.info("Student migrated to learning path", {
         mentorId,
         studentId,
         pathId,
-        enrollmentId: enrollment.id
+        enrollmentId: enrollment.id,
       });
 
       return { success: true, enrollmentId: enrollment.id };
@@ -380,12 +364,12 @@ export const BookingCompatibilityService = {
         mentorId,
         studentId,
         pathId,
-        error
+        error,
       });
 
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Migration failed'
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Migration failed",
       };
     }
   },
@@ -399,24 +383,28 @@ export const BookingCompatibilityService = {
     studentsEligibleForMigration: number;
     migrationRate: number;
   }> {
-    const [totalStudentsResult, enrolledStudentsResult, eligibleStudentsResult] = await Promise.all([
+    const [
+      totalStudentsResult,
+      enrolledStudentsResult,
+      eligibleStudentsResult,
+    ] = await Promise.all([
       // Total unique students
       pool.query(
         `SELECT COUNT(DISTINCT mentee_id) as count
          FROM bookings 
          WHERE mentor_id = $1 AND status = 'completed'`,
-        [mentorId]
+        [mentorId],
       ),
-      
+
       // Students in learning paths
       pool.query(
         `SELECT COUNT(DISTINCT pe.student_id) as count
          FROM path_enrollments pe
          JOIN learning_paths lp ON pe.learning_path_id = lp.id
          WHERE lp.mentor_id = $1`,
-        [mentorId]
+        [mentorId],
       ),
-      
+
       // Students eligible for migration (3+ sessions, not in learning paths)
       pool.query(
         `SELECT COUNT(DISTINCT b.mentee_id) as count
@@ -431,21 +419,24 @@ export const BookingCompatibilityService = {
            )
          GROUP BY b.mentee_id
          HAVING COUNT(*) >= 3`,
-        [mentorId]
-      )
+        [mentorId],
+      ),
     ]);
 
-    const totalStudents = parseInt(totalStudentsResult.rows[0]?.count || '0');
-    const studentsInLearningPaths = parseInt(enrolledStudentsResult.rows[0]?.count || '0');
+    const totalStudents = parseInt(totalStudentsResult.rows[0]?.count || "0");
+    const studentsInLearningPaths = parseInt(
+      enrolledStudentsResult.rows[0]?.count || "0",
+    );
     const studentsEligibleForMigration = eligibleStudentsResult.rows.length;
 
-    const migrationRate = totalStudents > 0 ? (studentsInLearningPaths / totalStudents) * 100 : 0;
+    const migrationRate =
+      totalStudents > 0 ? (studentsInLearningPaths / totalStudents) * 100 : 0;
 
     return {
       totalStudents,
       studentsInLearningPaths,
       studentsEligibleForMigration,
-      migrationRate
+      migrationRate,
     };
   },
 
@@ -465,18 +456,25 @@ export const BookingCompatibilityService = {
 
     try {
       // Test 1: Verify booking system still works independently
-      const bookingMethods = ['createBooking', 'getBookingById', 'getUserBookings'];
+      const bookingMethods = [
+        "createBooking",
+        "getBookingById",
+        "getUserBookings",
+      ];
       for (const method of bookingMethods) {
-        if (typeof BookingsService[method] !== 'function') {
+        if (typeof BookingsService[method] !== "function") {
           bookingSystemIntact = false;
           issues.push(`BookingsService.${method} is not available`);
         }
       }
 
       // Test 2: Verify learning path integration works
-      const integrationMethods = ['linkSessionToMilestone', 'getSessionContext'];
+      const integrationMethods = [
+        "linkSessionToMilestone",
+        "getSessionContext",
+      ];
       for (const method of integrationMethods) {
-        if (typeof SessionMilestoneService[method] !== 'function') {
+        if (typeof SessionMilestoneService[method] !== "function") {
           learningPathIntegrationWorking = false;
           issues.push(`SessionMilestoneService.${method} is not available`);
         }
@@ -485,16 +483,17 @@ export const BookingCompatibilityService = {
       // Test 3: Verify hybrid mode configuration exists
       const { rows } = await pool.query(
         `SELECT COUNT(*) as count FROM information_schema.tables 
-         WHERE table_name = 'mentor_hybrid_config'`
+         WHERE table_name = 'mentor_hybrid_config'`,
       );
-      
+
       if (parseInt(rows[0].count) === 0) {
         hybridModeOperational = false;
-        issues.push('Hybrid mode configuration table not found');
+        issues.push("Hybrid mode configuration table not found");
       }
-
     } catch (error) {
-      issues.push(`Integration validation error: ${error instanceof Error ? error.message : error}`);
+      issues.push(
+        `Integration validation error: ${error instanceof Error ? error.message : error}`,
+      );
       bookingSystemIntact = false;
       learningPathIntegrationWorking = false;
       hybridModeOperational = false;
@@ -504,7 +503,7 @@ export const BookingCompatibilityService = {
       bookingSystemIntact,
       learningPathIntegrationWorking,
       hybridModeOperational,
-      issues
+      issues,
     };
-  }
+  },
 };

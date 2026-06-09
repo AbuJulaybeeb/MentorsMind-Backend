@@ -1,7 +1,7 @@
-import pool from '../config/database';
-import { EncryptionUtil } from '../utils/encryption.utils';
+import pool, { db } from "../config/database";
+import { EncryptionUtil } from "../utils/encryption.utils";
 
-export type UserTier = 'free' | 'pro' | 'enterprise';
+export type UserTier = "free" | "pro" | "enterprise";
 
 export interface UserRecord {
   id: string;
@@ -43,40 +43,55 @@ export interface UpdateUserPayload {
   bankAccountDetails?: string | null;
 }
 
-const PRIVATE_COLUMNS =
-  `id, email, role, user_tier, first_name, last_name, bio, avatar_url, is_active,
+const PRIVATE_COLUMNS = `id, email, role, user_tier, first_name, last_name, bio, avatar_url, is_active,
    notification_preferences, phone_number_encrypted, date_of_birth_encrypted,
    government_id_number_encrypted, bank_account_details_encrypted,
    pii_encryption_version, created_at, updated_at`;
 
-const PUBLIC_COLUMNS = 'id, role, first_name, last_name, bio, avatar_url';
+const PUBLIC_COLUMNS = "id, role, first_name, last_name, bio, avatar_url";
 
 export const UsersService = {
   async findById(id: string): Promise<UserRecord | null> {
-    const { rows } = await pool.query<any>(
+    const { rows } = await db.query(
       `SELECT ${PRIVATE_COLUMNS} FROM users WHERE id = $1 AND is_active = true`,
-      [id]
+      [id],
     );
     return rows[0] ? this.mapPrivateRow(rows[0]) : null;
   },
 
   async findPublicById(id: string): Promise<PublicUserRecord | null> {
-    const { rows } = await pool.query<PublicUserRecord>(
+    const { rows } = await db.query(
       `SELECT ${PUBLIC_COLUMNS} FROM users WHERE id = $1 AND is_active = true`,
-      [id]
+      [id],
     );
     return rows[0] ?? null;
   },
 
-  async getNotificationPreferences(id: string): Promise<Record<string, Record<string, boolean>> | null> {
-    const { rows } = await pool.query<{ notification_preferences: Record<string, Record<string, boolean>> }>(
+  async findPublicByIds(ids: string[]): Promise<PublicUserRecord[]> {
+    if (ids.length === 0) return [];
+    const { rows } = await db.query(
+      `SELECT ${PUBLIC_COLUMNS} FROM users WHERE id = ANY($1) AND is_active = true`,
+      [ids],
+    );
+    return rows;
+  },
+
+  async getNotificationPreferences(
+    id: string,
+  ): Promise<Record<string, Record<string, boolean>> | null> {
+    const { rows } = await pool.query<{
+      notification_preferences: Record<string, Record<string, boolean>>;
+    }>(
       `SELECT notification_preferences FROM users WHERE id = $1 AND is_active = true`,
-      [id]
+      [id],
     );
     return rows[0]?.notification_preferences ?? null;
   },
 
-  async update(id: string, payload: UpdateUserPayload): Promise<UserRecord | null> {
+  async update(
+    id: string,
+    payload: UpdateUserPayload,
+  ): Promise<UserRecord | null> {
     const fields: string[] = [];
     const values: unknown[] = [];
     let idx = 1;
@@ -130,19 +145,22 @@ export const UsersService = {
     values.push(id);
 
     const { rows } = await pool.query<any>(
-      `UPDATE users SET ${fields.join(', ')} WHERE id = $${idx} AND is_active = true
+      `UPDATE users SET ${fields.join(", ")} WHERE id = $${idx} AND is_active = true
        RETURNING ${PRIVATE_COLUMNS}`,
-      values
+      values,
     );
     return rows[0] ? this.mapPrivateRow(rows[0]) : null;
   },
 
-  async updateAvatar(id: string, avatarUrl: string): Promise<UserRecord | null> {
+  async updateAvatar(
+    id: string,
+    avatarUrl: string,
+  ): Promise<UserRecord | null> {
     const { rows } = await pool.query<any>(
       `UPDATE users SET avatar_url = $1, updated_at = NOW()
        WHERE id = $2 AND is_active = true
        RETURNING ${PRIVATE_COLUMNS}`,
-      [avatarUrl, id]
+      [avatarUrl, id],
     );
     return rows[0] ? this.mapPrivateRow(rows[0]) : null;
   },
@@ -150,7 +168,7 @@ export const UsersService = {
   async deactivate(id: string): Promise<boolean> {
     const { rowCount } = await pool.query(
       `UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1 AND is_active = true`,
-      [id]
+      [id],
     );
     return (rowCount ?? 0) > 0;
   },

@@ -2,12 +2,11 @@
  * Mentors Service - Business logic for mentor management
  */
 
-import pool from '../config/database';
-import { CacheService } from './cache.service';
-import { CacheKeys, CacheTTL } from '../utils/cache-key.utils';
-import { logger } from '../utils/logger.utils';
-import { PaginationUtil } from '../utils/pagination.utils';
-import { PaginatedResponse } from '../types/pagination.types';
+import pool, { db } from "../config/database";
+import { CacheService } from "./cache.service";
+import { CacheKeys, CacheTTL } from "../utils/cache-key.utils";
+import { logger } from "../utils/logger.utils";
+import { PaginationUtil } from "../utils/pagination.utils";
 import {
   CreateMentorProfileInput,
   UpdateMentorProfileInput,
@@ -17,7 +16,7 @@ import {
   GetMentorSessionsQuery,
   GetMentorEarningsQuery,
   SubmitVerificationInput,
-} from '../validators/schemas/mentors.schemas';
+} from "../validators/schemas/mentors.schemas";
 
 export interface MentorRecord {
   id: string;
@@ -83,16 +82,18 @@ export const MentorsService = {
    * Returns conditions array and values array for parameterized queries
    */
   buildMentorFilters(
-    query: Omit<ListMentorsQuery, 'cursor' | 'limit' | 'sortBy' | 'sortOrder'>,
+    query: Omit<ListMentorsQuery, "cursor" | "limit" | "sortBy" | "sortOrder">,
     startIdx: number = 1,
   ): { conditions: string[]; values: unknown[]; nextIdx: number } {
     const { search, expertise, minRate, maxRate, isAvailable } = query;
-    const conditions: string[] = ["role = 'mentor'", 'is_active = true'];
+    const conditions: string[] = ["role = 'mentor'", "is_active = true"];
     const values: unknown[] = [];
     let idx = startIdx;
 
     if (search) {
-      conditions.push(`(first_name ILIKE $${idx} OR last_name ILIKE $${idx} OR bio ILIKE $${idx})`);
+      conditions.push(
+        `(first_name ILIKE $${idx} OR last_name ILIKE $${idx} OR bio ILIKE $${idx})`,
+      );
       values.push(`%${search}%`);
       idx++;
     }
@@ -123,23 +124,47 @@ export const MentorsService = {
   /**
    * Create a mentor profile (promotes user to mentor role)
    */
-  async createProfile(userId: string, payload: CreateMentorProfileInput): Promise<MentorRecord | null> {
-    const fields: string[] = ['role = $1', 'updated_at = NOW()'];
-    const values: unknown[] = ['mentor'];
+  async createProfile(
+    userId: string,
+    payload: CreateMentorProfileInput,
+  ): Promise<MentorRecord | null> {
+    const fields: string[] = ["role = $1", "updated_at = NOW()"];
+    const values: unknown[] = ["mentor"];
     let idx = 2;
 
-    if (payload.bio !== undefined) { fields.push(`bio = $${idx++}`); values.push(payload.bio); }
-    if (payload.avatarUrl !== undefined) { fields.push(`avatar_url = $${idx++}`); values.push(payload.avatarUrl); }
-    if (payload.hourlyRate !== undefined) { fields.push(`hourly_rate = $${idx++}`); values.push(payload.hourlyRate); }
-    if (payload.expertise !== undefined) { fields.push(`expertise = $${idx++}`); values.push(payload.expertise); }
-    if (payload.yearsOfExperience !== undefined) { fields.push(`years_of_experience = $${idx++}`); values.push(payload.yearsOfExperience); }
-    if (payload.timezone !== undefined) { fields.push(`timezone = $${idx++}`); values.push(payload.timezone); }
-    if (payload.availabilitySchedule !== undefined) { fields.push(`availability_schedule = $${idx++}`); values.push(JSON.stringify(payload.availabilitySchedule)); }
+    if (payload.bio !== undefined) {
+      fields.push(`bio = $${idx++}`);
+      values.push(payload.bio);
+    }
+    if (payload.avatarUrl !== undefined) {
+      fields.push(`avatar_url = $${idx++}`);
+      values.push(payload.avatarUrl);
+    }
+    if (payload.hourlyRate !== undefined) {
+      fields.push(`hourly_rate = $${idx++}`);
+      values.push(payload.hourlyRate);
+    }
+    if (payload.expertise !== undefined) {
+      fields.push(`expertise = $${idx++}`);
+      values.push(payload.expertise);
+    }
+    if (payload.yearsOfExperience !== undefined) {
+      fields.push(`years_of_experience = $${idx++}`);
+      values.push(payload.yearsOfExperience);
+    }
+    if (payload.timezone !== undefined) {
+      fields.push(`timezone = $${idx++}`);
+      values.push(payload.timezone);
+    }
+    if (payload.availabilitySchedule !== undefined) {
+      fields.push(`availability_schedule = $${idx++}`);
+      values.push(JSON.stringify(payload.availabilitySchedule));
+    }
 
     values.push(userId);
 
-    const { rows } = await pool.query<MentorRecord>(
-      `UPDATE users SET ${fields.join(', ')}
+    const { rows } = await db.query(
+      `UPDATE users SET ${fields.join(", ")}
        WHERE id = $${idx} AND is_active = true
        RETURNING ${MENTOR_COLUMNS}`,
       values,
@@ -156,7 +181,7 @@ export const MentorsService = {
       CacheKeys.mentorProfile(id),
       CacheTTL.medium,
       async () => {
-        const { rows } = await pool.query<MentorRecord>(
+        const { rows } = await db.query(
           `SELECT ${MENTOR_COLUMNS} FROM users
            WHERE id = $1 AND role = 'mentor' AND is_active = true`,
           [id],
@@ -166,29 +191,69 @@ export const MentorsService = {
     );
   },
 
+  async findByIds(ids: string[]): Promise<MentorRecord[]> {
+    if (ids.length === 0) return [];
+    const { rows } = await db.query(
+      `SELECT ${MENTOR_COLUMNS} FROM users
+       WHERE id = ANY($1) AND role = 'mentor' AND is_active = true`,
+      [ids],
+    );
+    return rows;
+  },
+
   /**
    * Update mentor profile
    * Invalidates the mentor profile cache and mentor list cache
    */
-  async update(id: string, payload: UpdateMentorProfileInput): Promise<MentorRecord | null> {
-    const fields: string[] = ['updated_at = NOW()'];
+  async update(
+    id: string,
+    payload: UpdateMentorProfileInput,
+  ): Promise<MentorRecord | null> {
+    const fields: string[] = ["updated_at = NOW()"];
     const values: unknown[] = [];
     let idx = 1;
 
-    if (payload.firstName !== undefined) { fields.push(`first_name = $${idx++}`); values.push(payload.firstName); }
-    if (payload.lastName !== undefined) { fields.push(`last_name = $${idx++}`); values.push(payload.lastName); }
-    if (payload.bio !== undefined) { fields.push(`bio = $${idx++}`); values.push(payload.bio); }
-    if (payload.avatarUrl !== undefined) { fields.push(`avatar_url = $${idx++}`); values.push(payload.avatarUrl); }
-    if (payload.hourlyRate !== undefined) { fields.push(`hourly_rate = $${idx++}`); values.push(payload.hourlyRate); }
-    if (payload.expertise !== undefined) { fields.push(`expertise = $${idx++}`); values.push(payload.expertise); }
-    if (payload.yearsOfExperience !== undefined) { fields.push(`years_of_experience = $${idx++}`); values.push(payload.yearsOfExperience); }
-    if (payload.timezone !== undefined) { fields.push(`timezone = $${idx++}`); values.push(payload.timezone); }
-    if (payload.isAvailable !== undefined) { fields.push(`is_available = $${idx++}`); values.push(payload.isAvailable); }
+    if (payload.firstName !== undefined) {
+      fields.push(`first_name = $${idx++}`);
+      values.push(payload.firstName);
+    }
+    if (payload.lastName !== undefined) {
+      fields.push(`last_name = $${idx++}`);
+      values.push(payload.lastName);
+    }
+    if (payload.bio !== undefined) {
+      fields.push(`bio = $${idx++}`);
+      values.push(payload.bio);
+    }
+    if (payload.avatarUrl !== undefined) {
+      fields.push(`avatar_url = $${idx++}`);
+      values.push(payload.avatarUrl);
+    }
+    if (payload.hourlyRate !== undefined) {
+      fields.push(`hourly_rate = $${idx++}`);
+      values.push(payload.hourlyRate);
+    }
+    if (payload.expertise !== undefined) {
+      fields.push(`expertise = $${idx++}`);
+      values.push(payload.expertise);
+    }
+    if (payload.yearsOfExperience !== undefined) {
+      fields.push(`years_of_experience = $${idx++}`);
+      values.push(payload.yearsOfExperience);
+    }
+    if (payload.timezone !== undefined) {
+      fields.push(`timezone = $${idx++}`);
+      values.push(payload.timezone);
+    }
+    if (payload.isAvailable !== undefined) {
+      fields.push(`is_available = $${idx++}`);
+      values.push(payload.isAvailable);
+    }
 
     values.push(id);
 
     const { rows } = await pool.query<MentorRecord>(
-      `UPDATE users SET ${fields.join(', ')}
+      `UPDATE users SET ${fields.join(", ")}
        WHERE id = $${idx} AND role = 'mentor' AND is_active = true
        RETURNING ${MENTOR_COLUMNS}`,
       values,
@@ -198,9 +263,11 @@ export const MentorsService = {
     if (rows[0]) {
       await CacheService.del(CacheKeys.mentorProfile(id));
       // Also invalidate mentor search/list caches
-      await CacheService.invalidatePattern('mm:mentors:search:*');
-      await CacheService.invalidatePattern('mm:mentors:*:*');
-      logger.debug('Mentor cache invalidated on profile update', { mentorId: id });
+      await CacheService.invalidatePattern("mm:mentors:search:*");
+      await CacheService.invalidatePattern("mm:mentors:*:*");
+      logger.debug("Mentor cache invalidated on profile update", {
+        mentorId: id,
+      });
     }
 
     return rows[0] ?? null;
@@ -213,71 +280,78 @@ export const MentorsService = {
   async list(query: ListMentorsQuery): Promise<MentorListResult> {
     const cacheKey = CacheKeys.mentorSearch(query);
 
-    return CacheService.wrap(
-      cacheKey,
-      CacheTTL.short,
-      async () => {
-        const { cursor, limit } = query;
+    return CacheService.wrap(cacheKey, CacheTTL.short, async () => {
+      const { cursor, limit } = query;
 
-        // Build base filters (without cursor)
-        const baseFilters = this.buildMentorFilters(query);
+      // Build base filters (without cursor)
+      const baseFilters = this.buildMentorFilters(query);
 
-        // Add cursor condition for data query
-        const dataConditions = [...baseFilters.conditions];
-        const dataValues = [...baseFilters.values];
-        let idx = baseFilters.nextIdx;
+      // Add cursor condition for data query
+      const dataConditions = [...baseFilters.conditions];
+      const dataValues = [...baseFilters.values];
+      let idx = baseFilters.nextIdx;
 
-        if (cursor) {
-          const decoded = PaginationUtil.decodeCursor(cursor);
-          if (decoded) {
-            dataConditions.push(`(created_at, id) < ($${idx}, $${idx + 1})`);
-            dataValues.push(decoded.created_at, decoded.id);
-            idx += 2;
-          }
+      if (cursor) {
+        const decoded = PaginationUtil.decodeCursor(cursor);
+        if (decoded) {
+          dataConditions.push(`(created_at, id) < ($${idx}, $${idx + 1})`);
+          dataValues.push(decoded.created_at, decoded.id);
+          idx += 2;
         }
+      }
 
-        const dataWhereClause = `WHERE ${dataConditions.join(' AND ')}`;
-        const countWhereClause = `WHERE ${baseFilters.conditions.join(' AND ')}`;
+      const dataWhereClause = `WHERE ${dataConditions.join(" AND ")}`;
+      const countWhereClause = `WHERE ${baseFilters.conditions.join(" AND ")}`;
 
-        // Use a fixed sort order for cursor-based pagination consistency
-        const orderClause = `ORDER BY created_at DESC, id DESC`;
+      // Use a fixed sort order for cursor-based pagination consistency
+      const orderClause = `ORDER BY created_at DESC, id DESC`;
 
-        const [dataResult, countResult] = await Promise.all([
-          pool.query<MentorRecord>(
-            `SELECT ${MENTOR_COLUMNS} FROM users ${dataWhereClause} ${orderClause} LIMIT $${idx}`,
-            [...dataValues, limit + 1],
-          ),
-          pool.query<{ count: string }>(
-            `SELECT COUNT(*) FROM users ${countWhereClause}`,
-            baseFilters.values,
-          ),
-        ]);
+      const [dataResult, countResult] = await Promise.all([
+        pool.query<MentorRecord>(
+          `SELECT ${MENTOR_COLUMNS} FROM users ${dataWhereClause} ${orderClause} LIMIT $${idx}`,
+          [...dataValues, limit + 1],
+        ),
+        pool.query<{ count: string }>(
+          `SELECT COUNT(*) FROM users ${countWhereClause}`,
+          baseFilters.values,
+        ),
+      ]);
 
-        const rows = dataResult.rows;
-        const has_more = rows.length > limit;
-        const data = has_more ? rows.slice(0, limit) : rows;
+      const rows = dataResult.rows;
+      const has_more = rows.length > limit;
+      const data = has_more ? rows.slice(0, limit) : rows;
 
-        const lastItem = data[data.length - 1];
-        const next_cursor = has_more && lastItem ? PaginationUtil.encodeCursor(PaginationUtil.getCursorFromItem(lastItem)!) : null;
+      const lastItem = data[data.length - 1];
+      const next_cursor =
+        has_more && lastItem
+          ? PaginationUtil.encodeCursor(
+              PaginationUtil.getCursorFromItem(lastItem)!,
+            )
+          : null;
 
-        const total = parseInt(countResult.rows[0].count, 10);
+      const total = parseInt(countResult.rows[0].count, 10);
 
-        return {
-          mentors: data,
-          next_cursor,
-          has_more,
-          total,
-        };
-      },
-    );
+      return {
+        mentors: data,
+        next_cursor,
+        has_more,
+        total,
+      };
+    });
   },
 
   /**
    * Set mentor availability schedule
    * Invalidates the mentor profile cache
    */
-  async setAvailability(id: string, payload: SetAvailabilityInput): Promise<MentorRecord | null> {
-    const fields: string[] = ['availability_schedule = $1', 'updated_at = NOW()'];
+  async setAvailability(
+    id: string,
+    payload: SetAvailabilityInput,
+  ): Promise<MentorRecord | null> {
+    const fields: string[] = [
+      "availability_schedule = $1",
+      "updated_at = NOW()",
+    ];
     const values: unknown[] = [JSON.stringify(payload.schedule)];
     let idx = 2;
 
@@ -289,7 +363,7 @@ export const MentorsService = {
     values.push(id);
 
     const { rows } = await pool.query<MentorRecord>(
-      `UPDATE users SET ${fields.join(', ')}
+      `UPDATE users SET ${fields.join(", ")}
        WHERE id = $${idx} AND role = 'mentor' AND is_active = true
        RETURNING ${MENTOR_COLUMNS}`,
       values,
@@ -298,7 +372,9 @@ export const MentorsService = {
     // Invalidate mentor profile cache
     if (rows[0]) {
       await CacheService.del(CacheKeys.mentorProfile(id));
-      logger.debug('Mentor profile cache invalidated on availability update', { mentorId: id });
+      logger.debug("Mentor profile cache invalidated on availability update", {
+        mentorId: id,
+      });
     }
 
     return rows[0] ?? null;
@@ -307,21 +383,32 @@ export const MentorsService = {
   /**
    * Get mentor availability
    */
-  async getAvailability(id: string): Promise<{ schedule: unknown; isAvailable: boolean } | null> {
-    const { rows } = await pool.query<{ availability_schedule: unknown; is_available: boolean }>(
+  async getAvailability(
+    id: string,
+  ): Promise<{ schedule: unknown; isAvailable: boolean } | null> {
+    const { rows } = await pool.query<{
+      availability_schedule: unknown;
+      is_available: boolean;
+    }>(
       `SELECT availability_schedule, is_available FROM users
        WHERE id = $1 AND role = 'mentor' AND is_active = true`,
       [id],
     );
     if (!rows[0]) return null;
-    return { schedule: rows[0].availability_schedule, isAvailable: rows[0].is_available };
+    return {
+      schedule: rows[0].availability_schedule,
+      isAvailable: rows[0].is_available,
+    };
   },
 
   /**
    * Update mentor pricing
    * Invalidates the mentor profile cache and mentor search caches
    */
-  async updatePricing(id: string, payload: UpdatePricingInput): Promise<MentorRecord | null> {
+  async updatePricing(
+    id: string,
+    payload: UpdatePricingInput,
+  ): Promise<MentorRecord | null> {
     const { rows } = await pool.query<MentorRecord>(
       `UPDATE users SET hourly_rate = $1, updated_at = NOW()
        WHERE id = $2 AND role = 'mentor' AND is_active = true
@@ -332,8 +419,10 @@ export const MentorsService = {
     // Invalidate mentor profile and search caches
     if (rows[0]) {
       await CacheService.del(CacheKeys.mentorProfile(id));
-      await CacheService.invalidatePattern('mm:mentors:search:*');
-      logger.debug('Mentor cache invalidated on pricing update', { mentorId: id });
+      await CacheService.invalidatePattern("mm:mentors:search:*");
+      logger.debug("Mentor cache invalidated on pricing update", {
+        mentorId: id,
+      });
     }
 
     return rows[0] ?? null;
@@ -342,9 +431,17 @@ export const MentorsService = {
   /**
    * Get sessions for a mentor
    */
-  async getSessions(id: string, query: GetMentorSessionsQuery): Promise<{ sessions: MentorSessionRecord[]; total: number; next_cursor: string | null; has_more: boolean }> {
+  async getSessions(
+    id: string,
+    query: GetMentorSessionsQuery,
+  ): Promise<{
+    sessions: MentorSessionRecord[];
+    total: number;
+    next_cursor: string | null;
+    has_more: boolean;
+  }> {
     const { cursor, limit, status, from, to } = query;
-    const conditions: string[] = ['mentor_id = $1'];
+    const conditions: string[] = ["mentor_id = $1"];
     const values: unknown[] = [id];
     let idx = 2;
 
@@ -358,11 +455,20 @@ export const MentorsService = {
       }
     }
 
-    if (status) { conditions.push(`status = $${idx++}`); values.push(status); }
-    if (from) { conditions.push(`scheduled_at >= $${idx++}`); values.push(from); }
-    if (to) { conditions.push(`scheduled_at <= $${idx++}`); values.push(to); }
+    if (status) {
+      conditions.push(`status = $${idx++}`);
+      values.push(status);
+    }
+    if (from) {
+      conditions.push(`scheduled_at >= $${idx++}`);
+      values.push(from);
+    }
+    if (to) {
+      conditions.push(`scheduled_at <= $${idx++}`);
+      values.push(to);
+    }
 
-    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+    const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
     const [dataResult, countResult] = await Promise.all([
       pool.query<MentorSessionRecord>(
@@ -370,7 +476,7 @@ export const MentorsService = {
         [...values, limit + 1],
       ),
       pool.query<{ count: string }>(
-        `SELECT COUNT(*) FROM sessions WHERE mentor_id = $1 ${status ? `AND status = $2` : ''}`,
+        `SELECT COUNT(*) FROM sessions WHERE mentor_id = $1 ${status ? `AND status = $2` : ""}`,
         status ? [id, status] : [id],
       ),
     ]);
@@ -380,7 +486,13 @@ export const MentorsService = {
     const data = has_more ? rows.slice(0, limit) : rows;
 
     const lastItem = data[data.length - 1];
-    const next_cursor = has_more && lastItem ? PaginationUtil.encodeCursor({ id: lastItem.id, created_at: lastItem.scheduled_at.toISOString() }) : null;
+    const next_cursor =
+      has_more && lastItem
+        ? PaginationUtil.encodeCursor({
+            id: lastItem.id,
+            created_at: lastItem.scheduled_at.toISOString(),
+          })
+        : null;
 
     return {
       sessions: data,
@@ -393,18 +505,31 @@ export const MentorsService = {
   /**
    * Get earnings data for a mentor
    */
-  async getEarnings(id: string, query: GetMentorEarningsQuery): Promise<EarningsSummary> {
+  async getEarnings(
+    id: string,
+    query: GetMentorEarningsQuery,
+  ): Promise<EarningsSummary> {
     const { from, to, groupBy } = query;
 
     const values: unknown[] = [id];
     let idx = 2;
 
     const dateFilters: string[] = [];
-    if (from) { dateFilters.push(`AND b.created_at >= $${idx++}`); values.push(from); }
-    if (to) { dateFilters.push(`AND b.created_at <= $${idx++}`); values.push(to); }
-    const dateFilterClause = dateFilters.join(' ');
+    if (from) {
+      dateFilters.push(`AND b.created_at >= $${idx++}`);
+      values.push(from);
+    }
+    if (to) {
+      dateFilters.push(`AND b.created_at <= $${idx++}`);
+      values.push(to);
+    }
+    const dateFilterClause = dateFilters.join(" ");
 
-    const allowedUnits: Record<string, string> = { day: 'day', week: 'week', month: 'month' };
+    const allowedUnits: Record<string, string> = {
+      day: "day",
+      week: "week",
+      month: "month",
+    };
     const truncUnit = allowedUnits[groupBy];
     if (!truncUnit) {
       throw new Error(`Invalid groupBy value: ${groupBy}`);
@@ -486,8 +611,14 @@ export const MentorsService = {
 
     // Invalidate mentor profile cache
     await CacheService.del(CacheKeys.mentorProfile(id));
-    logger.info('Verification request submitted', { mentorId: id, documentType: payload.documentType });
+    logger.info("Verification request submitted", {
+      mentorId: id,
+      documentType: payload.documentType,
+    });
 
-    return { submitted: true, message: 'Verification request submitted successfully' };
+    return {
+      submitted: true,
+      message: "Verification request submitted successfully",
+    };
   },
-}
+};

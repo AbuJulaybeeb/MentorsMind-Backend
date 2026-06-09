@@ -53,13 +53,14 @@
   "type": "commonjs",
   "lint-staged": {
     "*.ts": [
-      "node --max-old-space-size=4096 ./node_modules/.bin/eslint --fix",
-      "prettier --write"
+      "node --max-old-space-size=4096 ./node_modules/eslint/bin/eslint.js --fix",
+      "npx prettier --write"
     ]
   },
   "dependencies": {
     "@apollo/server": "^4.13.0",
     "@aws-sdk/client-s3": "^3.1037.0",
+    "@aws-sdk/client-transcribe": "^3.1063.0",
     "@aws-sdk/s3-request-presigner": "^3.1037.0",
     "@bull-board/api": "^6.20.6",
     "@bull-board/express": "^6.20.6",

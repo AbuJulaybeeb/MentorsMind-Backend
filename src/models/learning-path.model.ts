@@ -1,15 +1,44 @@
-import pool from "../config/database";
+import pool, { db } from "../config/database";
 import { z } from "zod";
 
 // Validation schemas
-export const DifficultyLevelSchema = z.enum(['beginner', 'intermediate', 'advanced', 'expert']);
-export const PricingModelSchema = z.enum(['total', 'milestone', 'subscription']);
-export const EnrollmentStatusSchema = z.enum(['active', 'paused', 'completed', 'cancelled']);
-export const PaymentStatusSchema = z.enum(['pending', 'paid', 'refunded', 'failed', 'partial']);
-export const MilestoneStatusSchema = z.enum(['not_started', 'in_progress', 'completed', 'skipped']);
-export const SessionTypeSchema = z.enum(['milestone', 'support', 'assessment']);
-export const PrerequisiteTypeSchema = z.enum(['milestone', 'skill', 'assessment']);
-export const CertificateTypeSchema = z.enum(['milestone', 'path']);
+export const DifficultyLevelSchema = z.enum([
+  "beginner",
+  "intermediate",
+  "advanced",
+  "expert",
+]);
+export const PricingModelSchema = z.enum([
+  "total",
+  "milestone",
+  "subscription",
+]);
+export const EnrollmentStatusSchema = z.enum([
+  "active",
+  "paused",
+  "completed",
+  "cancelled",
+]);
+export const PaymentStatusSchema = z.enum([
+  "pending",
+  "paid",
+  "refunded",
+  "failed",
+  "partial",
+]);
+export const MilestoneStatusSchema = z.enum([
+  "not_started",
+  "in_progress",
+  "completed",
+  "skipped",
+]);
+export const SessionTypeSchema = z.enum(["milestone", "support", "assessment"]);
+export const PrerequisiteTypeSchema = z.enum([
+  "milestone",
+  "skill",
+  "assessment",
+]);
+export const CertificateTypeSchema = z.enum(["milestone", "path"]);
 
 // Core interfaces
 export interface LearningPath {
@@ -161,7 +190,7 @@ export interface PathAnalytics {
 
 // Supporting interfaces
 export interface CompletionCriteria {
-  type: 'automatic' | 'manual' | 'assessment' | 'project';
+  type: "automatic" | "manual" | "assessment" | "project";
   requirements: {
     sessionsRequired?: number;
     assessmentScore?: number;
@@ -173,7 +202,7 @@ export interface CompletionCriteria {
 
 export interface Resource {
   id: string;
-  type: 'document' | 'video' | 'link' | 'exercise';
+  type: "document" | "video" | "link" | "exercise";
   title: string;
   url?: string;
   content?: string;
@@ -192,7 +221,7 @@ export interface CertificateData {
 
 export interface Achievement {
   id: string;
-  type: 'milestone_completed' | 'streak' | 'fast_learner' | 'perfectionist';
+  type: "milestone_completed" | "streak" | "fast_learner" | "perfectionist";
   title: string;
   description: string;
   earnedAt: string;
@@ -299,35 +328,43 @@ export const CreateLearningPathSchema = z.object({
   estimatedDurationHours: z.number().int().min(1).max(1000),
   difficultyLevel: DifficultyLevelSchema,
   totalPrice: z.number().min(0).optional(),
-  pricingModel: PricingModelSchema.default('total'),
-  currency: z.string().default('XLM'),
+  pricingModel: PricingModelSchema.default("total"),
+  currency: z.string().default("XLM"),
   tags: z.array(z.string()).default([]),
-  milestones: z.array(z.object({
-    title: z.string().min(1).max(255),
-    description: z.string().optional(),
-    estimatedDurationHours: z.number().int().min(1),
-    price: z.number().min(0).optional(),
-    learningObjectives: z.array(z.string()),
-    completionCriteria: z.object({
-      type: z.enum(['automatic', 'manual', 'assessment', 'project']),
-      requirements: z.object({
-        sessionsRequired: z.number().int().min(0).optional(),
-        assessmentScore: z.number().min(0).max(100).optional(),
-        projectSubmission: z.boolean().optional(),
-        mentorApproval: z.boolean().optional(),
+  milestones: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(255),
+        description: z.string().optional(),
+        estimatedDurationHours: z.number().int().min(1),
+        price: z.number().min(0).optional(),
+        learningObjectives: z.array(z.string()),
+        completionCriteria: z.object({
+          type: z.enum(["automatic", "manual", "assessment", "project"]),
+          requirements: z.object({
+            sessionsRequired: z.number().int().min(0).optional(),
+            assessmentScore: z.number().min(0).max(100).optional(),
+            projectSubmission: z.boolean().optional(),
+            mentorApproval: z.boolean().optional(),
+          }),
+          description: z.string(),
+        }),
+        resources: z
+          .array(
+            z.object({
+              id: z.string(),
+              type: z.enum(["document", "video", "link", "exercise"]),
+              title: z.string(),
+              url: z.string().url().optional(),
+              content: z.string().optional(),
+              metadata: z.record(z.any()).default({}),
+            }),
+          )
+          .default([]),
+        isRequired: z.boolean().default(true),
       }),
-      description: z.string(),
-    }),
-    resources: z.array(z.object({
-      id: z.string(),
-      type: z.enum(['document', 'video', 'link', 'exercise']),
-      title: z.string(),
-      url: z.string().url().optional(),
-      content: z.string().optional(),
-      metadata: z.record(z.any()).default({}),
-    })).default([]),
-    isRequired: z.boolean().default(true),
-  })).min(1),
+    )
+    .min(1),
 });
 
 export const UpdateLearningPathSchema = CreateLearningPathSchema.partial();
@@ -363,22 +400,23 @@ export const CreatePathReviewSchema = z.object({
 export type CreateLearningPathData = z.infer<typeof CreateLearningPathSchema>;
 export type UpdateLearningPathData = z.infer<typeof UpdateLearningPathSchema>;
 export type CreateEnrollmentData = z.infer<typeof CreateEnrollmentSchema>;
-export type UpdateEnrollmentStatusData = z.infer<typeof UpdateEnrollmentStatusSchema>;
+export type UpdateEnrollmentStatusData = z.infer<
+  typeof UpdateEnrollmentStatusSchema
+>;
 export type CompleteMilestoneData = z.infer<typeof CompleteMilestoneSchema>;
-export type CreatePrerequisiteOverrideData = z.infer<typeof CreatePrerequisiteOverrideSchema>;
+export type CreatePrerequisiteOverrideData = z.infer<
+  typeof CreatePrerequisiteOverrideSchema
+>;
 export type CreatePathReviewData = z.infer<typeof CreatePathReviewSchema>;
 
 // Database model class
 export const LearningPathModel = {
-  async initializeTable(): Promise<void> {
-    // Tables are created via migrations, this is a placeholder for consistency
-    // with existing model pattern
-  },
-
-  async create(data: CreateLearningPathData & { mentorId: string }): Promise<LearningPathRecord> {
+  async create(
+    data: CreateLearningPathData & { mentorId: string },
+  ): Promise<LearningPathRecord> {
     const client = await pool.connect();
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
 
       // Create the learning path
       const { rows: pathRows } = await client.query<LearningPathRecord>(
@@ -396,8 +434,8 @@ export const LearningPathModel = {
           data.pricingModel,
           data.currency,
           data.tags,
-          {}
-        ]
+          {},
+        ],
       );
 
       const learningPath = pathRows[0];
@@ -421,15 +459,15 @@ export const LearningPathModel = {
             milestone.learningObjectives,
             milestone.completionCriteria,
             milestone.resources,
-            milestone.isRequired
-          ]
+            milestone.isRequired,
+          ],
         );
       }
 
-      await client.query('COMMIT');
+      await client.query("COMMIT");
       return learningPath;
     } catch (error) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();
@@ -437,9 +475,9 @@ export const LearningPathModel = {
   },
 
   async findById(id: string): Promise<LearningPathRecord | null> {
-    const { rows } = await pool.query<LearningPathRecord>(
+    const { rows } = await db.query(
       `SELECT * FROM learning_paths WHERE id = $1 AND deleted_at IS NULL`,
-      [id]
+      [id],
     );
     return rows[0] || null;
   },
@@ -451,13 +489,13 @@ export const LearningPathModel = {
       isTemplate?: boolean;
       page?: number;
       limit?: number;
-    }
+    },
   ): Promise<{ paths: LearningPathRecord[]; total: number }> {
     const page = filters?.page || 1;
     const limit = filters?.limit || 10;
     const offset = (page - 1) * limit;
 
-    let whereClause = 'mentor_id = $1 AND deleted_at IS NULL';
+    let whereClause = "mentor_id = $1 AND deleted_at IS NULL";
     const params: any[] = [mentorId];
     let paramIndex = 2;
 
@@ -474,26 +512,26 @@ export const LearningPathModel = {
     }
 
     const [dataResult, countResult] = await Promise.all([
-      pool.query<LearningPathRecord>(
+      db.query(
         `SELECT * FROM learning_paths WHERE ${whereClause} 
          ORDER BY created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-        [...params, limit, offset]
+        [...params, limit, offset],
       ),
-      pool.query(
+      db.query(
         `SELECT COUNT(*) FROM learning_paths WHERE ${whereClause}`,
-        params
-      )
+        params,
+      ),
     ]);
 
     return {
       paths: dataResult.rows,
-      total: parseInt(countResult.rows[0].count, 10)
+      total: parseInt(countResult.rows[0].count, 10),
     };
   },
 
   async update(
     id: string,
-    data: Partial<UpdateLearningPathData>
+    data: Partial<UpdateLearningPathData>,
   ): Promise<LearningPathRecord | null> {
     const fields: string[] = [];
     const values: any[] = [];
@@ -532,33 +570,33 @@ export const LearningPathModel = {
 
     values.push(id);
 
-    const { rows } = await pool.query<LearningPathRecord>(
-      `UPDATE learning_paths SET ${fields.join(', ')} WHERE id = $${idx} AND deleted_at IS NULL RETURNING *`,
-      values
+    const { rows } = await db.query(
+      `UPDATE learning_paths SET ${fields.join(", ")} WHERE id = $${idx} AND deleted_at IS NULL RETURNING *`,
+      values,
     );
     return rows[0] || null;
   },
 
   async delete(id: string): Promise<boolean> {
-    const { rowCount } = await pool.query(
+    const { rowCount } = await db.query(
       `UPDATE learning_paths SET deleted_at = CURRENT_TIMESTAMP WHERE id = $1 AND deleted_at IS NULL`,
-      [id]
+      [id],
     );
-    return rowCount > 0;
+    return (rowCount ?? 0) > 0;
   },
 
   async publish(id: string): Promise<LearningPathRecord | null> {
-    const { rows } = await pool.query<LearningPathRecord>(
+    const { rows } = await db.query(
       `UPDATE learning_paths SET is_published = true WHERE id = $1 AND deleted_at IS NULL RETURNING *`,
-      [id]
+      [id],
     );
     return rows[0] || null;
   },
 
   async unpublish(id: string): Promise<LearningPathRecord | null> {
-    const { rows } = await pool.query<LearningPathRecord>(
+    const { rows } = await db.query(
       `UPDATE learning_paths SET is_published = false WHERE id = $1 AND deleted_at IS NULL RETURNING *`,
-      [id]
+      [id],
     );
     return rows[0] || null;
   },
@@ -574,7 +612,7 @@ export const LearningPathModel = {
     const limit = filters?.limit || 10;
     const offset = (page - 1) * limit;
 
-    let whereClause = 'is_published = true AND deleted_at IS NULL';
+    let whereClause = "is_published = true AND deleted_at IS NULL";
     const params: any[] = [];
     let paramIndex = 1;
 
@@ -597,21 +635,21 @@ export const LearningPathModel = {
     }
 
     const [dataResult, countResult] = await Promise.all([
-      pool.query<LearningPathRecord>(
+      db.query(
         `SELECT * FROM learning_paths WHERE ${whereClause} 
          ORDER BY rating DESC, enrolled_count DESC, created_at DESC 
          LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
-        [...params, limit, offset]
+        [...params, limit, offset],
       ),
-      pool.query(
+      db.query(
         `SELECT COUNT(*) FROM learning_paths WHERE ${whereClause}`,
-        params
-      )
+        params,
+      ),
     ]);
 
     return {
       paths: dataResult.rows,
-      total: parseInt(countResult.rows[0].count, 10)
+      total: parseInt(countResult.rows[0].count, 10),
     };
-  }
+  },
 };

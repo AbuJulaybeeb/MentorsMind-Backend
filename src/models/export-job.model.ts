@@ -1,4 +1,4 @@
-import pool from "../config/database";
+import { db } from "../config/database";
 
 export interface ExportJob {
   id: string;
@@ -13,26 +13,6 @@ export interface ExportJob {
 }
 
 export const ExportJobModel = {
-  async initializeTable(): Promise<void> {
-    const query = `
-      CREATE TABLE IF NOT EXISTS export_jobs (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        user_id UUID NOT NULL,
-        status VARCHAR(20) NOT NULL DEFAULT 'pending',
-        storage_key TEXT,
-        error_message TEXT,
-        expires_at TIMESTAMP WITH TIME ZONE,
-        metadata JSONB DEFAULT '{}'::jsonb,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_export_jobs_user_id ON export_jobs(user_id);
-      CREATE INDEX IF NOT EXISTS idx_export_jobs_status ON export_jobs(status);
-    `;
-    await pool.query(query);
-  },
-
   async create(
     userId: string,
     metadata?: Record<string, any>,
@@ -42,7 +22,7 @@ export const ExportJobModel = {
       VALUES ($1, 'pending', $2)
       RETURNING *;
     `;
-    const { rows } = await pool.query<ExportJob>(query, [
+    const { rows } = await db.query(query, [
       userId,
       JSON.stringify(metadata || {}),
     ]);
@@ -51,13 +31,13 @@ export const ExportJobModel = {
 
   async findById(id: string): Promise<ExportJob | null> {
     const query = "SELECT * FROM export_jobs WHERE id = $1;";
-    const { rows } = await pool.query<ExportJob>(query, [id]);
+    const { rows } = await db.query(query, [id]);
     return rows[0] || null;
   },
 
   async getStatus(id: string): Promise<ExportJob | null> {
     const query = "SELECT * FROM export_jobs WHERE id = $1;";
-    const { rows } = await pool.query<ExportJob>(query, [id]);
+    const { rows } = await db.query(query, [id]);
     return rows[0] || null;
   },
 
@@ -77,7 +57,7 @@ export const ExportJobModel = {
           updated_at = CURRENT_TIMESTAMP
       WHERE id = $1;
     `;
-    await pool.query(query, [id, status, storageKey, errorMessage, expiresAt]);
+    await db.query(query, [id, status, storageKey, errorMessage, expiresAt]);
   },
 
   async findPendingByUserId(userId: string): Promise<ExportJob | null> {
@@ -88,7 +68,7 @@ export const ExportJobModel = {
       ORDER BY created_at DESC
       LIMIT 1;
     `;
-    const { rows } = await pool.query<ExportJob>(query, [userId]);
+    const { rows } = await db.query(query, [userId]);
     return rows[0] || null;
   },
 
@@ -100,7 +80,15 @@ export const ExportJobModel = {
       ORDER BY created_at DESC
       LIMIT 1;
     `;
-    const { rows } = await pool.query<ExportJob>(query, [userId]);
+    const { rows } = await db.query(query, [userId]);
     return rows[0] || null;
+  },
+
+  async deleteOlderThan(days: number): Promise<number> {
+    const { rowCount } = await db.query(
+      `DELETE FROM export_jobs WHERE created_at < NOW() - ($1::int * INTERVAL '1 day') RETURNING id;`,
+      [days],
+    );
+    return rowCount || 0;
   },
 };

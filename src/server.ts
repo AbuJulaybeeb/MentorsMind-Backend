@@ -1,13 +1,7 @@
-import http from 'http';
-// Config must be imported first — validates env vars before anything else loads
-import config from './config';
-import app from './app';
-import { initializeModels } from './models';
-import { initializeCollaborationSocket } from './services/collaboration.socket';
-// Sentry must be initialised before any other imports so it can instrument them
 import * as Sentry from "@sentry/node";
 import { nodeProfilingIntegration } from "@sentry/profiling-node";
 
+// Sentry must be initialised before any other imports so it can instrument them
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV || "development",
@@ -23,9 +17,11 @@ Sentry.init({
   },
 });
 
+import http from "http";
 // Config must be imported first — validates env vars before anything else loads
 import config from "./config";
 import app from "./app";
+import { initializeCollaborationSocket } from "./services/collaboration.socket";
 import { createSocketServer } from "./config/socket";
 import { initializeSocketService } from "./services/socket.service";
 import { initializeGraphQL } from "./graphql/server";
@@ -40,17 +36,25 @@ import {
   escrowCheckWorker,
   notificationsWorker,
   notificationCleanupWorker,
+  maintenanceWorker,
+  webhookDeliveryWorker,
+  transcriptionWorker,
   startScheduler,
   stopScheduler,
 } from "./workers";
 import { initializeEmailTemplates } from "./services/template-initializer.service";
 import { logger } from "./utils/logger.utils";
 import { validateRequiredTables } from "./utils/table-validator.utils";
-import "../queues/bulk.queue";
-import "../queues/export.queue";
-import "../queues/export.queue";
 import { startPoolMonitor, stopPoolMonitor } from "./utils/pool-monitor.utils";
 
+// Import queues for side effects
+import "../queues/bulk.queue";
+import "../queues/export.queue";
+
+const { port: PORT, apiVersion: API_VERSION } = config.server;
+const NODE_ENV = config.env;
+
+const server = http.createServer(app);
 
 // Validate that all required tables exist (from migrations)
 // This replaces the anti-pattern of creating tables at runtime via DDL
@@ -62,8 +66,6 @@ validateRequiredTables()
           "Please run migrations before starting the server.",
         { missingTables: validation.missingTables },
       );
-      // Don't exit here - allow health check to report the issue
-      // This gives ops teams time to fix via migrations
     } else {
       logger.info("Database validation successful: all required tables exist");
     }
@@ -108,37 +110,16 @@ startScheduler().catch((err) => {
   logger.error("Failed to start job scheduler", { error: err });
 });
 
-const { port: PORT, apiVersion: API_VERSION } = config.server;
-const NODE_ENV = config.env;
-
-const server = http.createServer(app);
+// Initialize collaboration sockets
 initializeCollaborationSocket(server);
 
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📝 Environment: ${NODE_ENV}`);
-  console.log(`🌐 API URL: http://localhost:${PORT}/api/${API_VERSION}`);
-  console.log(`💚 Health check: http://localhost:${PORT}/health`);
-  console.log(`📚 API Docs: http://localhost:${PORT}/api/${API_VERSION}/docs`);
 // Initialize GraphQL server
 initializeGraphQL(app).catch((err) => {
   logger.error("Failed to initialize GraphQL server", { error: err });
 });
 
-// Start server
+// Start pool monitor
 startPoolMonitor();
-
-const server = app.listen(PORT, () => {
-  logger.info("Server started", {
-    port: PORT,
-    env: NODE_ENV,
-    apiUrl: `http://localhost:${PORT}/api/${API_VERSION}`,
-    healthCheck: `http://localhost:${PORT}/health`,
-    apiDocs: `http://localhost:${PORT}/api/${API_VERSION}/docs`,
-    graphql: `http://localhost:${PORT}/api/graphql`,
-    webSocket: `ws://localhost:${PORT}/ws`,
-  });
-});
 
 // Attach Socket.IO server to the same HTTP server
 const io = createSocketServer(server);
@@ -149,7 +130,7 @@ stellarMonitorJob.start().catch((err) => {
   logger.error("Failed to start Horizon SSE monitor", { error: err });
 });
 
-// Start background exchange rate refresh (60s interval, cached in Redis)
+// Start background exchange rate refresh
 import("./services/assetExchange.service")
   .then(({ AssetExchangeService }) => {
     AssetExchangeService.startRateRefresh();
@@ -157,6 +138,18 @@ import("./services/assetExchange.service")
   .catch((err) =>
     logger.error("Failed to start asset exchange rate refresh", { error: err }),
   );
+
+server.listen(PORT, () => {
+  logger.info("Server started", {
+    port: PORT,
+    env: NODE_ENV,
+    apiUrl: `http://localhost:${PORT}/api/${API_VERSION}`,
+    healthCheck: `http://localhost:${PORT}/health/ready`,
+    apiDocs: `http://localhost:${PORT}/api/${API_VERSION}/docs`,
+    graphql: `http://localhost:${PORT}/api/graphql`,
+    webSocket: `ws://localhost:${PORT}/ws`,
+  });
+});
 
 // Graceful shutdown
 async function shutdown(signal: string) {
@@ -172,6 +165,9 @@ async function shutdown(signal: string) {
     escrowCheckWorker.close(),
     notificationsWorker.close(),
     notificationCleanupWorker.close(),
+    maintenanceWorker.close(),
+    webhookDeliveryWorker.close(),
+    transcriptionWorker.close(),
     stopScheduler(),
     Promise.resolve(stopPoolMonitor()),
   ]);

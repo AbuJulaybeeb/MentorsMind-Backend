@@ -36,6 +36,7 @@ import {
 import { asyncHandler } from "../utils/asyncHandler.utils";
 import { HealthController } from "../controllers/health.controller";
 import sessionFeedbackRoutes from "./session-feedback.routes";
+import sessionSummaryRoutes from "./session-summary.routes";
 import featureFlagRoutes from "./feature-flag.routes";
 import calendarSyncRoutes from "./calendar-sync.routes";
 import developerRoutes from "./developer.routes";
@@ -83,7 +84,7 @@ router.use("/bookings/:id/transcription", transcriptionRoutes);
 router.use("/transcriptions", transcriptionSearchRoutes);
 router.use("/webhooks/email", emailWebhookRoutes);
 router.use("/recordings", sessionRecordingRoutes);
-router.use(sessionSummaryRoutes);
+router.use("/summaries", sessionSummaryRoutes);
 router.use("/feedback", sessionFeedbackRoutes);
 router.use("/feature-flags", featureFlagRoutes);
 router.use("/calendar/sync", calendarSyncRoutes);

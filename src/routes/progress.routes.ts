@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { ProgressController } from "../controllers/progress.controller";
-import { authenticateToken } from "../middleware/auth";
-import { validateRequest } from "../middleware/validation";
+import { authenticate as authenticateToken } from "../middleware/auth.middleware";
+import { validationMiddleware as validateRequest } from "../middleware/validation.middleware";
 import { body, param } from "express-validator";
 
 const router = Router();
@@ -11,15 +11,15 @@ router.use(authenticateToken);
 
 // Validation middleware
 const validateEnrollmentId = [
-  param('enrollmentId').isUUID().withMessage('Invalid enrollment ID format')
+  param("enrollmentId").isUUID().withMessage("Invalid enrollment ID format"),
 ];
 
 const validateMilestoneId = [
-  param('milestoneId').isUUID().withMessage('Invalid milestone ID format')
+  param("milestoneId").isUUID().withMessage("Invalid milestone ID format"),
 ];
 
 const validatePathId = [
-  param('pathId').isUUID().withMessage('Invalid path ID format')
+  param("pathId").isUUID().withMessage("Invalid path ID format"),
 ];
 
 /**
@@ -76,10 +76,11 @@ const validatePathId = [
  *       404:
  *         description: Enrollment not found
  */
-router.get('/enrollments/:enrollmentId', 
-  validateEnrollmentId, 
-  validateRequest, 
-  ProgressController.getEnrollmentDetails
+router.get(
+  "/enrollments/:enrollmentId",
+  validateEnrollmentId,
+  validateRequest,
+  ProgressController.getEnrollmentDetails,
 );
 
 /**
@@ -124,14 +125,17 @@ router.get('/enrollments/:enrollmentId',
  *       404:
  *         description: Enrollment not found
  */
-router.patch('/enrollments/:enrollmentId/status', 
+router.patch(
+  "/enrollments/:enrollmentId/status",
   [
     ...validateEnrollmentId,
-    body('status').isIn(['active', 'paused', 'completed', 'cancelled']).withMessage('Invalid status'),
-    body('reason').optional().isString().withMessage('Reason must be a string'),
-    validateRequest
-  ], 
-  ProgressController.updateEnrollmentStatus
+    body("status")
+      .isIn(["active", "paused", "completed", "cancelled"])
+      .withMessage("Invalid status"),
+    body("reason").optional().isString().withMessage("Reason must be a string"),
+    validateRequest,
+  ],
+  ProgressController.updateEnrollmentStatus,
 );
 
 /**
@@ -204,15 +208,19 @@ router.patch('/enrollments/:enrollmentId/status',
  *       404:
  *         description: Enrollment or milestone not found
  */
-router.post('/enrollments/:enrollmentId/milestones/:milestoneId/complete', 
+router.post(
+  "/enrollments/:enrollmentId/milestones/:milestoneId/complete",
   [
     ...validateEnrollmentId,
     ...validateMilestoneId,
-    body('completionData').optional().isObject().withMessage('Completion data must be an object'),
-    body('notes').optional().isString().withMessage('Notes must be a string'),
-    validateRequest
-  ], 
-  ProgressController.completeMilestone
+    body("completionData")
+      .optional()
+      .isObject()
+      .withMessage("Completion data must be an object"),
+    body("notes").optional().isString().withMessage("Notes must be a string"),
+    validateRequest,
+  ],
+  ProgressController.completeMilestone,
 );
 
 /**
@@ -266,15 +274,21 @@ router.post('/enrollments/:enrollmentId/milestones/:milestoneId/complete',
  *       404:
  *         description: Enrollment or milestone not found
  */
-router.patch('/enrollments/:enrollmentId/milestones/:milestoneId/progress', 
+router.patch(
+  "/enrollments/:enrollmentId/milestones/:milestoneId/progress",
   [
     ...validateEnrollmentId,
     ...validateMilestoneId,
-    body('progress').isFloat({ min: 0, max: 100 }).withMessage('Progress must be between 0 and 100'),
-    body('timeSpentMinutes').optional().isInt({ min: 0 }).withMessage('Time spent must be a positive integer'),
-    validateRequest
-  ], 
-  ProgressController.updateMilestoneProgress
+    body("progress")
+      .isFloat({ min: 0, max: 100 })
+      .withMessage("Progress must be between 0 and 100"),
+    body("timeSpentMinutes")
+      .optional()
+      .isInt({ min: 0 })
+      .withMessage("Time spent must be a positive integer"),
+    validateRequest,
+  ],
+  ProgressController.updateMilestoneProgress,
 );
 
 /**
@@ -331,10 +345,11 @@ router.patch('/enrollments/:enrollmentId/milestones/:milestoneId/progress',
  *       404:
  *         description: Enrollment not found
  */
-router.get('/enrollments/:enrollmentId/progress', 
-  validateEnrollmentId, 
-  validateRequest, 
-  ProgressController.getProgress
+router.get(
+  "/enrollments/:enrollmentId/progress",
+  validateEnrollmentId,
+  validateRequest,
+  ProgressController.getProgress,
 );
 
 /**
@@ -391,10 +406,11 @@ router.get('/enrollments/:enrollmentId/progress',
  *       404:
  *         description: Learning path not found
  */
-router.get('/learning-paths/:pathId/analytics', 
-  validatePathId, 
-  validateRequest, 
-  ProgressController.getPathAnalytics
+router.get(
+  "/learning-paths/:pathId/analytics",
+  validatePathId,
+  validateRequest,
+  ProgressController.getPathAnalytics,
 );
 
 /**
@@ -437,7 +453,10 @@ router.get('/learning-paths/:pathId/analytics',
  *                     upcomingMilestones:
  *                       type: array
  */
-router.get('/analytics/student-dashboard', ProgressController.getStudentDashboard);
+router.get(
+  "/analytics/student-dashboard",
+  ProgressController.getStudentDashboard,
+);
 
 /**
  * @swagger
@@ -481,6 +500,9 @@ router.get('/analytics/student-dashboard', ProgressController.getStudentDashboar
  *                     studentProgress:
  *                       type: array
  */
-router.get('/analytics/mentor-dashboard', ProgressController.getMentorDashboard);
+router.get(
+  "/analytics/mentor-dashboard",
+  ProgressController.getMentorDashboard,
+);
 
 export default router;

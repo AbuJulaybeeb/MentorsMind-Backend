@@ -42,8 +42,8 @@ initializeI18n().catch((err) => {
 });
 
 // Tracing middleware must be first for all downstream components
-app.use(blocklistMiddleware);
 app.use(tracingMiddleware);
+app.use(blocklistMiddleware);
 
 // Security middleware
 app.use(securityMiddleware);
@@ -138,7 +138,7 @@ if (resolvedApiVersion !== "v1" && resolvedApiVersion !== "v2") {
   app.use(`/api/${resolvedApiVersion}`, routes);
 }
 
-import HealthController from "./controllers/health.controller";
+import { HealthController } from "./controllers/health.controller";
 import { requireAdmin } from "./middleware/admin-auth.middleware";
 import { authenticate } from "./middleware/auth.middleware";
 import { registerMetricsRoute } from "./middleware/metrics.middleware";

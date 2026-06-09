@@ -8,7 +8,7 @@ import {
   calculateRefundEligibility,
 } from "../utils/booking-conflicts.utils";
 import { SocketService } from "./socket.service";
-import pool from "../config/database";
+import { db } from "../config/database";
 import { CalendarService } from "./calendar.service";
 import { SorobanEscrowService } from "./sorobanEscrow.service";
 import { QueueService } from "./queue.service";
@@ -44,7 +44,7 @@ interface BookingEscrowMetadata {
 async function getBookingEscrowMetadata(
   bookingId: string,
 ): Promise<BookingEscrowMetadata> {
-  const { rows } = await pool.query<BookingEscrowMetadata>(
+  const { rows } = await db.query(
     `SELECT escrow_id, escrow_contract_address FROM bookings WHERE id = $1`,
     [bookingId],
   );
@@ -63,7 +63,7 @@ async function setBookingEscrowMetadata(
   escrowId: string,
   txHash: string | null,
 ): Promise<void> {
-  await pool.query(
+  await db.query(
     `UPDATE bookings
      SET escrow_contract_address = $2,
          escrow_id = $3,
@@ -90,7 +90,7 @@ export const BookingsService = {
 
   async createBooking(data: CreateBookingData): Promise<BookingRecord> {
     // Batch-validate both users in a single query (avoids N+1)
-    const { rows: users } = await pool.query(
+    const { rows: users } = await db.query(
       `SELECT id, role, status FROM users WHERE id = ANY($1) AND is_active = true`,
       [[data.menteeId, data.mentorId]],
     );
@@ -113,13 +113,13 @@ export const BookingsService = {
       );
     }
     if (mentee.status === "banned") {
-      throw createError(
-        "Your account has been permanently banned.",
-        403,
-      );
+      throw createError("Your account has been permanently banned.", 403);
     }
     if (mentor.status === "suspended" || mentor.status === "banned") {
-      throw createError("This mentor is not currently available for bookings.", 400);
+      throw createError(
+        "This mentor is not currently available for bookings.",
+        400,
+      );
     }
 
     if (mentor.role !== "mentor") {
@@ -137,8 +137,12 @@ export const BookingsService = {
       throw createError("Mentor is not available at the requested time", 409);
     }
 
-    // Calculate amount (placeholder - should fetch from mentor profile)
-    const hourlyRate = 50; // TODO: Fetch from mentor profile
+    // Calculate amount from mentor profile
+    const mentorProfile = await MentorsService.findById(data.mentorId);
+    if (!mentorProfile || mentorProfile.hourly_rate === null) {
+      throw createError("Mentor profile or hourly rate not found", 404);
+    }
+    const hourlyRate = mentorProfile.hourly_rate;
     const amount = ((data.durationMinutes / 60) * hourlyRate).toFixed(7);
 
     // Create booking

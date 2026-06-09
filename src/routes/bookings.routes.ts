@@ -1,10 +1,6 @@
-import { Router } from 'express';
-import { BookingsController } from '../controllers/bookings.controller';
-import { CollaborationController } from '../controllers/collaboration.controller';
-import { authenticate } from '../middleware/auth.middleware';
-import { requireRole } from '../middleware/rbac.middleware';
 import { Router } from "express";
 import { BookingsController } from "../controllers/bookings.controller";
+import { CollaborationController } from "../controllers/collaboration.controller";
 import { authenticate } from "../middleware/auth.middleware";
 import { requireRole } from "../middleware/rbac.middleware";
 import { idempotency } from "../middleware/idempotency.middleware";
@@ -42,7 +38,13 @@ const router = Router();
  *       201:
  *         description: Booking created
  */
-router.post("/", authenticate, idempotency, validate(createBookingSchema), BookingsController.createBooking);
+router.post(
+  "/",
+  authenticate,
+  idempotency,
+  validate(createBookingSchema),
+  BookingsController.createBooking,
+);
 router.get("/:id/meeting-link", getMeetingLink);
 router.post("/:id/meeting-link/regenerate", regenerateMeetingLink);
 /**
@@ -254,7 +256,11 @@ router.post("/:id/confirm", authenticate, BookingsController.confirmBooking);
  *       200:
  *         description: Collaboration state retrieved
  */
-router.get('/:id/collaboration', authenticate, CollaborationController.getCollaborationState);
+router.get(
+  "/:id/collaboration",
+  authenticate,
+  CollaborationController.getCollaborationState,
+);
 
 /**
  * @swagger
@@ -293,6 +299,10 @@ router.get('/:id/collaboration', authenticate, CollaborationController.getCollab
  *       200:
  *         description: Collaboration state updated successfully
  */
-router.patch('/:id/collaboration', authenticate, CollaborationController.updateCollaborationState);
+router.patch(
+  "/:id/collaboration",
+  authenticate,
+  CollaborationController.updateCollaborationState,
+);
 
 export default router;

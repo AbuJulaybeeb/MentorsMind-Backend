@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { ReferralController } from "../controllers/referral.controller";
-import { authenticate } from "../middleware/auth";
-import { authorize } from "../middleware/authorize";
+import { authenticate } from "../middleware/auth.middleware";
+import { requireRole as authorize } from "../middleware/rbac.middleware";
 
 const router = Router();
 
@@ -14,24 +14,15 @@ router.use(authenticate);
 
 // Create referral code
 // POST /api/v1/referrals/codes
-router.post(
-  "/codes",
-  ReferralController.createReferralCode
-);
+router.post("/codes", ReferralController.createReferralCode);
 
 // Get user's referral codes
 // GET /api/v1/referrals/codes
-router.get(
-  "/codes",
-  ReferralController.getUserReferralCodes
-);
+router.get("/codes", ReferralController.getUserReferralCodes);
 
 // Validate referral code
 // GET /api/v1/referrals/codes/:code/validate
-router.get(
-  "/codes/:code/validate",
-  ReferralController.validateReferralCode
-);
+router.get("/codes/:code/validate", ReferralController.validateReferralCode);
 
 /**
  * Referral Tracking Routes
@@ -39,31 +30,22 @@ router.get(
 
 // Apply referral code (create referral)
 // POST /api/v1/referrals/apply
-router.post(
-  "/apply",
-  ReferralController.applyReferralCode
-);
+router.post("/apply", ReferralController.applyReferralCode);
 
 // Get user's referrals
 // GET /api/v1/referrals
-router.get(
-  "/",
-  ReferralController.getUserReferrals
-);
+router.get("/", ReferralController.getUserReferrals);
 
 // Get referral statistics
 // GET /api/v1/referrals/stats
-router.get(
-  "/stats",
-  ReferralController.getReferralStats
-);
+router.get("/stats", ReferralController.getReferralStats);
 
 // Update referral status (admin only)
 // PUT /api/v1/referrals/:referralId
 router.put(
   "/:referralId",
-  authorize(["admin"]),
-  ReferralController.updateReferral
+  authorize("admin"),
+  ReferralController.updateReferral,
 );
 
 /**
@@ -72,30 +54,21 @@ router.put(
 
 // Create affiliate profile
 // POST /api/v1/referrals/affiliate
-router.post(
-  "/affiliate",
-  ReferralController.createAffiliateProfile
-);
+router.post("/affiliate", ReferralController.createAffiliateProfile);
 
 // Get affiliate profile
 // GET /api/v1/referrals/affiliate/:userId
-router.get(
-  "/affiliate/:userId",
-  ReferralController.getAffiliateProfile
-);
+router.get("/affiliate/:userId", ReferralController.getAffiliateProfile);
 
 // Update affiliate profile
 // PUT /api/v1/referrals/affiliate/:userId
-router.put(
-  "/affiliate/:userId",
-  ReferralController.updateAffiliateProfile
-);
+router.put("/affiliate/:userId", ReferralController.updateAffiliateProfile);
 
 // Get affiliate dashboard
 // GET /api/v1/referrals/affiliate/:userId/dashboard
 router.get(
   "/affiliate/:userId/dashboard",
-  ReferralController.getAffiliateDashboard
+  ReferralController.getAffiliateDashboard,
 );
 
 // Approve affiliate profile (admin only)
@@ -103,7 +76,7 @@ router.get(
 router.post(
   "/affiliate/:userId/approve",
   authorize(["admin"]),
-  ReferralController.approveAffiliateProfile
+  ReferralController.approveAffiliateProfile,
 );
 
 /**
@@ -112,10 +85,7 @@ router.post(
 
 // Get reward tiers
 // GET /api/v1/referrals/tiers
-router.get(
-  "/tiers",
-  ReferralController.getRewardTiers
-);
+router.get("/tiers", ReferralController.getRewardTiers);
 
 /**
  * Payout Routes
@@ -126,7 +96,7 @@ router.get(
 router.post(
   "/affiliate/:userId/payout",
   authorize(["admin"]),
-  ReferralController.requestPayout
+  ReferralController.requestPayout,
 );
 
 export default router;

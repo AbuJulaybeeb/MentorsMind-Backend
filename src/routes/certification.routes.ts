@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { CertificationController } from "../controllers/certification.controller";
-import { authenticate } from "../middleware/auth";
-import { authorize } from "../middleware/authorize";
+import { authenticate } from "../middleware/auth.middleware";
+import { requireRole as authorize } from "../middleware/rbac.middleware";
 
 const router = Router();
 
@@ -14,10 +14,7 @@ router.use(authenticate);
 
 // Get all certification types
 // GET /api/v1/certifications/types
-router.get(
-  "/types",
-  CertificationController.getCertificationTypes
-);
+router.get("/types", CertificationController.getCertificationTypes);
 
 /**
  * Certification Management Routes
@@ -27,39 +24,39 @@ router.get(
 // POST /api/v1/certifications
 router.post(
   "/",
-  authorize(["mentor"]),
-  CertificationController.createCertification
+  authorize("mentor"),
+  CertificationController.createCertification,
 );
 
 // Get mentor certifications
 // GET /api/v1/certifications/mentor/:mentorId
 router.get(
   "/mentor/:mentorId",
-  authorize(["mentor", "admin"]),
-  CertificationController.getMentorCertifications
+  authorize("mentor", "admin"),
+  CertificationController.getMentorCertifications,
 );
 
 // Get certification summary
 // GET /api/v1/certifications/mentor/:mentorId/summary
 router.get(
   "/mentor/:mentorId/summary",
-  CertificationController.getCertificationSummary
+  CertificationController.getCertificationSummary,
 );
 
 // Update certification (admin only)
 // PUT /api/v1/certifications/:certificationId
 router.put(
   "/:certificationId",
-  authorize(["admin"]),
-  CertificationController.updateCertification
+  authorize("admin"),
+  CertificationController.updateCertification,
 );
 
-// Get pending certifications (admin only)
-// GET /api/v1/certifications/pending
-router.get(
-  "/pending",
-  authorize(["admin"]),
-  CertificationController.getPendingCertifications
+// Verify certification (admin only)
+// POST /api/v1/certifications/:certificationId/verify
+router.post(
+  "/:certificationId/verify",
+  authorize("admin"),
+  CertificationController.verifyCertification,
 );
 
 /**
@@ -71,7 +68,7 @@ router.get(
 router.post(
   "/tests/:testId/start",
   authorize(["mentor"]),
-  CertificationController.startSkillTest
+  CertificationController.startSkillTest,
 );
 
 // Submit test answers
@@ -79,7 +76,7 @@ router.post(
 router.post(
   "/tests/attempts/:attemptId/submit",
   authorize(["mentor"]),
-  CertificationController.submitTestAnswers
+  CertificationController.submitTestAnswers,
 );
 
 /**
@@ -91,7 +88,7 @@ router.post(
 router.post(
   "/background-checks",
   authorize(["mentor"]),
-  CertificationController.initiateBackgroundCheck
+  CertificationController.initiateBackgroundCheck,
 );
 
 // Get background check status
@@ -99,7 +96,7 @@ router.post(
 router.get(
   "/background-checks/:checkId",
   authorize(["mentor", "admin"]),
-  CertificationController.getBackgroundCheck
+  CertificationController.getBackgroundCheck,
 );
 
 /**
@@ -111,7 +108,7 @@ router.get(
 router.get(
   "/onboarding/:mentorId",
   authorize(["mentor", "admin"]),
-  CertificationController.getOnboardingProgress
+  CertificationController.getOnboardingProgress,
 );
 
 // Complete onboarding step
@@ -119,7 +116,7 @@ router.get(
 router.post(
   "/onboarding/:mentorId/steps/:stepId/complete",
   authorize(["mentor"]),
-  CertificationController.completeOnboardingStep
+  CertificationController.completeOnboardingStep,
 );
 
 export default router;

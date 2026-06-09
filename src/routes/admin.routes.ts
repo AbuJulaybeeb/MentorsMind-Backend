@@ -1,7 +1,7 @@
 import { Router } from "express";
 import backupRoutes from "./admin/backup.routes";
 import { AdminController } from "../controllers/admin.controller";
-import { AnalyticsController } from "../controllers/analytics.controller";
+import { AdvancedAnalyticsController } from "../controllers/advanced-analytics.controller";
 import { VerificationController } from "../controllers/verification.controller";
 import { RevenueReportController } from "../controllers/revenueReport.controller";
 import { JwksController } from "../controllers/jwks.controller";
@@ -786,51 +786,6 @@ router.post(
   asyncHandler(AdminController.previewEmailTemplate),
 );
 
-// ── Audit Log Routes ─────────────────────────────────────────────────────────
-
-/**
- * @swagger
- * /admin/audit-log:
- *   get:
- *     summary: Query audit logs with filtering and pagination
- *     tags: [Admin, Audit]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: page
- *         in: query
- *         schema: { type: integer, default: 1 }
- *       - name: limit
- *         in: query
- *         schema: { type: integer, default: 50 }
- *       - name: userId
- *         in: query
- *         schema: { type: string, format: uuid }
- *         description: Filter by user ID
- *       - name: action
- *         in: query
- *         schema: { type: string }
- *         description: Filter by action type
- *       - name: resourceType
- *         in: query
- *         schema: { type: string }
- *         description: Filter by resource type
- *       - name: startDate
- *         in: query
- *         schema: { type: string, format: date-time }
- *       - name: endDate
- *         in: query
- *         schema: { type: string, format: date-time }
- *     responses:
- *       200:
- *         description: Paginated audit logs
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/ApiResponse'
- */
-router.get("/audit-log", asyncHandler(AdminController.getAuditLogs));
-
 // ── Analytics Routes ─────────────────────────────────────────────────────────
 
 /**
@@ -852,7 +807,7 @@ router.get("/audit-log", asyncHandler(AdminController.getAuditLogs));
  *       200:
  *         description: Revenue analytics data
  */
-router.get("/analytics/revenue", asyncHandler(AnalyticsController.getRevenue));
+router.get("/analytics/revenue", AdvancedAnalyticsController.getRevenue);
 
 /**
  * @swagger
@@ -873,7 +828,7 @@ router.get("/analytics/revenue", asyncHandler(AnalyticsController.getRevenue));
  *       200:
  *         description: User growth analytics data
  */
-router.get("/analytics/users", asyncHandler(AnalyticsController.getUserGrowth));
+router.get("/analytics/users", AdvancedAnalyticsController.getUsers);
 
 /**
  * @swagger
@@ -894,10 +849,7 @@ router.get("/analytics/users", asyncHandler(AnalyticsController.getUserGrowth));
  *       200:
  *         description: Session analytics data
  */
-router.get(
-  "/analytics/sessions",
-  asyncHandler(AnalyticsController.getSessions),
-);
+router.get("/analytics/sessions", AdvancedAnalyticsController.getSessions);
 
 /**
  * @swagger
@@ -918,10 +870,10 @@ router.get(
  *       200:
  *         description: Top mentors data
  */
-router.get(
-  "/analytics/top-mentors",
-  asyncHandler(AnalyticsController.getTopMentors),
-);
+// router.get(
+//   "/analytics/top-mentors",
+//   asyncHandler(AnalyticsController.getTopMentors),
+// );
 
 /**
  * @swagger
@@ -939,10 +891,10 @@ router.get(
  *       200:
  *         description: Asset distribution data
  */
-router.get(
-  "/analytics/asset-distribution",
-  asyncHandler(AnalyticsController.getAssetDistribution),
-);
+// router.get(
+//   "/analytics/asset-distribution",
+//   asyncHandler(AnalyticsController.getAssetDistribution),
+// );
 
 /**
  * @swagger
@@ -956,10 +908,7 @@ router.get(
  *       200:
  *         description: Views refreshed successfully
  */
-router.post(
-  "/analytics/refresh",
-  asyncHandler(AnalyticsController.refreshViews),
-);
+router.post("/analytics/refresh", AdvancedAnalyticsController.refreshAnalytics);
 
 /**
  * @swagger

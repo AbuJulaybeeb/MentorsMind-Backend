@@ -1,4 +1,7 @@
-import { MilestoneProgressModel, EnrollmentModel } from "../models/enrollment.model";
+import {
+  MilestoneProgressModel,
+  EnrollmentModel,
+} from "../models/enrollment.model";
 import { MilestoneModel } from "../models/milestone.model";
 import { LearningPathModel } from "../models/learning-path.model";
 import { ProgressTrackingService } from "./progress-tracking.service";
@@ -6,13 +9,12 @@ import { CacheService } from "./cache.service";
 import { CacheKeys } from "../utils/cache-key.utils";
 import { logger } from "../utils/logger.utils";
 import { createError } from "../middleware/errorHandler";
-import { 
+import {
   CompleteMilestoneData,
   MilestoneCompletion,
-  Milestone,
-  CompletionCriteria
+  CompletionCriteria,
 } from "../models/learning-path.model";
-import pool from "../config/database";
+import pool, { db } from "../config/database";
 
 export interface CompletionValidation {
   isValid: boolean;
@@ -22,7 +24,11 @@ export interface CompletionValidation {
 }
 
 export interface AutoCompletionRule {
-  type: 'session_count' | 'time_spent' | 'assessment_score' | 'project_submission';
+  type:
+    | "session_count"
+    | "time_spent"
+    | "assessment_score"
+    | "project_submission";
   threshold: number;
   description: string;
 }
@@ -35,7 +41,7 @@ export const MilestoneCompletionService = {
     enrollmentId: string,
     milestoneId: string,
     completionData: CompleteMilestoneData,
-    mentorOverride: boolean = false
+    mentorOverride: boolean = false,
   ): Promise<MilestoneCompletion> {
     try {
       // Validate enrollment and milestone
@@ -44,53 +50,67 @@ export const MilestoneCompletionService = {
         throw createError("Enrollment not found", 404);
       }
 
-      if (enrollment.status !== 'active') {
-        throw createError("Cannot complete milestone for inactive enrollment", 400);
+      if (enrollment.status !== "active") {
+        throw createError(
+          "Cannot complete milestone for inactive enrollment",
+          400,
+        );
       }
 
       const milestone = await MilestoneModel.findById(milestoneId);
-      if (!milestone || milestone.learning_path_id !== enrollment.learning_path_id) {
+      if (
+        !milestone ||
+        milestone.learning_path_id !== enrollment.learning_path_id
+      ) {
         throw createError("Milestone not found in learning path", 404);
       }
 
       // Check if already completed
-      const existingProgress = await MilestoneProgressModel.findByEnrollmentAndMilestone(
-        enrollmentId, 
-        milestoneId
-      );
+      const existingProgress =
+        await MilestoneProgressModel.findByEnrollmentAndMilestone(
+          enrollmentId,
+          milestoneId,
+        );
 
-      if (existingProgress?.status === 'completed') {
+      if (existingProgress?.status === "completed") {
         throw createError("Milestone is already completed", 400);
       }
 
       // Validate completion criteria unless mentor override
       if (!mentorOverride) {
         const validation = await this.validateCompletionCriteria(
-          enrollmentId, 
-          milestoneId, 
-          completionData
+          enrollmentId,
+          milestoneId,
+          completionData,
         );
 
         if (!validation.isValid) {
-          throw createError(`Completion criteria not met: ${validation.message}`, 400);
+          throw createError(
+            `Completion criteria not met: ${validation.message}`,
+            400,
+          );
         }
       }
 
       // Check prerequisites
-      const prerequisiteValidation = await ProgressTrackingService.validatePrerequisites(
-        enrollment.student_id, 
-        milestoneId
-      );
+      const prerequisiteValidation =
+        await ProgressTrackingService.validatePrerequisites(
+          enrollment.student_id,
+          milestoneId,
+        );
 
       if (!prerequisiteValidation.isValid && !mentorOverride) {
-        throw createError(`Prerequisites not met: ${prerequisiteValidation.message}`, 400);
+        throw createError(
+          `Prerequisites not met: ${prerequisiteValidation.message}`,
+          400,
+        );
       }
 
       // Complete the milestone
       const completedProgress = await MilestoneProgressModel.completeMilestone(
         enrollmentId,
         milestoneId,
-        completionData
+        completionData,
       );
 
       if (!completedProgress) {
@@ -98,49 +118,68 @@ export const MilestoneCompletionService = {
       }
 
       // Update overall enrollment progress
-      const overallProgress = await MilestoneProgressModel.calculateOverallProgress(enrollmentId);
-      
+      const overallProgress =
+        await MilestoneProgressModel.calculateOverallProgress(enrollmentId);
+
       // Get next milestone
-      const milestones = await MilestoneModel.findByLearningPathId(enrollment.learning_path_id);
-      const currentMilestone = milestones.find(m => m.id === milestoneId);
-      const nextMilestone = milestones.find(m => m.order_index === (currentMilestone?.order_index || 0) + 1);
+      const milestones = await MilestoneModel.findByLearningPathId(
+        enrollment.learning_path_id,
+      );
+      const currentMilestone = milestones.find((m) => m.id === milestoneId);
+      const nextMilestone = milestones.find(
+        (m) => m.order_index === (currentMilestone?.order_index || 0) + 1,
+      );
 
       // Check if path is completed
-      const stats = await MilestoneProgressModel.getCompletionStats(enrollmentId);
-      const pathCompleted = stats.completedMilestones + stats.skippedMilestones === stats.totalMilestones;
+      const stats =
+        await MilestoneProgressModel.getCompletionStats(enrollmentId);
+      const pathCompleted =
+        stats.completedMilestones + stats.skippedMilestones ===
+        stats.totalMilestones;
 
       // Update enrollment status if path completed
       if (pathCompleted) {
-        await EnrollmentModel.updateStatus(enrollmentId, { status: 'completed' });
+        await EnrollmentModel.updateStatus(enrollmentId, {
+          status: "completed",
+        });
       } else if (nextMilestone) {
-        await EnrollmentModel.updateProgress(enrollmentId, overallProgress, nextMilestone.id);
+        await EnrollmentModel.updateProgress(
+          enrollmentId,
+          overallProgress,
+          nextMilestone.id,
+        );
       }
 
       // Generate completion certificate if configured
       const certificateGenerated = await this.generateCompletionCertificate(
         enrollmentId,
         milestoneId,
-        pathCompleted
+        pathCompleted,
       );
 
       // Generate achievement
       await ProgressTrackingService.generateAchievement(
         enrollment.student_id,
-        'milestone_completed',
+        "milestone_completed",
         {
           milestoneId,
           milestoneTitle: milestone.title,
           pathId: enrollment.learning_path_id,
           completionTime: completedProgress.completed_at,
-          mentorOverride
-        }
+          mentorOverride,
+        },
       );
 
       // Invalidate caches
       await Promise.all([
-        CacheService.del(CacheKeys.studentProgress(enrollment.student_id, enrollment.learning_path_id)),
+        CacheService.del(
+          CacheKeys.studentProgress(
+            enrollment.student_id,
+            enrollment.learning_path_id,
+          ),
+        ),
         CacheService.del(CacheKeys.enrollmentProgress(enrollmentId)),
-        CacheService.del(CacheKeys.pathAnalytics(enrollment.learning_path_id))
+        CacheService.del(CacheKeys.pathAnalytics(enrollment.learning_path_id)),
       ]);
 
       const result: MilestoneCompletion = {
@@ -148,8 +187,10 @@ export const MilestoneCompletionService = {
         enrollmentId,
         completedAt: completedProgress.completed_at!,
         certificateGenerated,
-        nextMilestone: nextMilestone ? MilestoneModel.transformToMilestone(nextMilestone) : undefined,
-        pathCompleted
+        nextMilestone: nextMilestone
+          ? MilestoneModel.transformToMilestone(nextMilestone)
+          : undefined,
+        pathCompleted,
       };
 
       logger.info("Milestone completed", {
@@ -158,7 +199,7 @@ export const MilestoneCompletionService = {
         studentId: enrollment.student_id,
         pathCompleted,
         overallProgress,
-        mentorOverride
+        mentorOverride,
       });
 
       return result;
@@ -166,7 +207,7 @@ export const MilestoneCompletionService = {
       logger.error("Failed to complete milestone", {
         enrollmentId,
         milestoneId,
-        error: error instanceof Error ? error.message : error
+        error: error instanceof Error ? error.message : error,
       });
       throw error;
     }
@@ -178,16 +219,16 @@ export const MilestoneCompletionService = {
   async validateCompletionCriteria(
     enrollmentId: string,
     milestoneId: string,
-    completionData: CompleteMilestoneData
+    completionData: CompleteMilestoneData,
   ): Promise<CompletionValidation> {
     try {
       const milestone = await MilestoneModel.findById(milestoneId);
       if (!milestone) {
         return {
           isValid: false,
-          missingRequirements: ['Milestone not found'],
+          missingRequirements: ["Milestone not found"],
           canOverride: false,
-          message: 'Milestone not found'
+          message: "Milestone not found",
         };
       }
 
@@ -195,36 +236,41 @@ export const MilestoneCompletionService = {
       const missingRequirements: string[] = [];
 
       switch (criteria.type) {
-        case 'automatic':
+        case "automatic": {
           // Check automatic completion rules
-          const autoValidation = await this.validateAutomaticCompletion(enrollmentId, milestoneId);
+          const autoValidation = await this.validateAutomaticCompletion(
+            enrollmentId,
+            milestoneId,
+          );
           if (!autoValidation.isValid) {
             missingRequirements.push(...autoValidation.missingRequirements);
           }
           break;
+        }
 
-        case 'manual':
+        case "manual":
           // Manual completion - always valid if mentor approves
           break;
 
-        case 'assessment':
+        case "assessment":
           // Check assessment score
           if (criteria.requirements.assessmentScore) {
             const score = completionData.completionData?.assessmentScore;
             if (!score || score < criteria.requirements.assessmentScore) {
               missingRequirements.push(
-                `Assessment score must be at least ${criteria.requirements.assessmentScore}%`
+                `Assessment score must be at least ${criteria.requirements.assessmentScore}%`,
               );
             }
           }
           break;
 
-        case 'project':
+        case "project":
           // Check project submission
           if (criteria.requirements.projectSubmission) {
-            const hasSubmission = completionData.completionData?.projectSubmitted;
+            const hasSubmission =
+              completionData.completionData?.projectSubmitted;
             if (!hasSubmission) {
-              missingRequirements.push('Project submission is required');
+              missingRequirements.push("Project submission is required");
             }
           }
           break;
@@ -234,7 +280,7 @@ export const MilestoneCompletionService = {
       if (criteria.requirements.mentorApproval) {
         const hasApproval = completionData.completionData?.mentorApproved;
         if (!hasApproval) {
-          missingRequirements.push('Mentor approval is required');
+          missingRequirements.push("Mentor approval is required");
         }
       }
 
@@ -242,20 +288,20 @@ export const MilestoneCompletionService = {
         isValid: missingRequirements.length === 0,
         missingRequirements,
         canOverride: true, // Mentors can always override
-        message: missingRequirements.join(', ')
+        message: missingRequirements.join(", "),
       };
     } catch (error) {
       logger.error("Failed to validate completion criteria", {
         enrollmentId,
         milestoneId,
-        error: error instanceof Error ? error.message : error
+        error: error instanceof Error ? error.message : error,
       });
-      
+
       return {
         isValid: false,
-        missingRequirements: ['Error validating completion criteria'],
+        missingRequirements: ["Error validating completion criteria"],
         canOverride: true,
-        message: 'Error validating completion criteria'
+        message: "Error validating completion criteria",
       };
     }
   },
@@ -265,16 +311,16 @@ export const MilestoneCompletionService = {
    */
   async validateAutomaticCompletion(
     enrollmentId: string,
-    milestoneId: string
+    milestoneId: string,
   ): Promise<CompletionValidation> {
     try {
       const milestone = await MilestoneModel.findById(milestoneId);
       if (!milestone) {
         return {
           isValid: false,
-          missingRequirements: ['Milestone not found'],
+          missingRequirements: ["Milestone not found"],
           canOverride: false,
-          message: 'Milestone not found'
+          message: "Milestone not found",
         };
       }
 
@@ -283,10 +329,13 @@ export const MilestoneCompletionService = {
 
       // Check session requirements
       if (criteria.requirements.sessionsRequired) {
-        const sessionCount = await this.getCompletedSessionCount(enrollmentId, milestoneId);
+        const sessionCount = await this.getCompletedSessionCount(
+          enrollmentId,
+          milestoneId,
+        );
         if (sessionCount < criteria.requirements.sessionsRequired) {
           missingRequirements.push(
-            `${criteria.requirements.sessionsRequired - sessionCount} more sessions required`
+            `${criteria.requirements.sessionsRequired - sessionCount} more sessions required`,
           );
         }
       }
@@ -295,20 +344,20 @@ export const MilestoneCompletionService = {
         isValid: missingRequirements.length === 0,
         missingRequirements,
         canOverride: true,
-        message: missingRequirements.join(', ')
+        message: missingRequirements.join(", "),
       };
     } catch (error) {
       logger.error("Failed to validate automatic completion", {
         enrollmentId,
         milestoneId,
-        error: error instanceof Error ? error.message : error
+        error: error instanceof Error ? error.message : error,
       });
-      
+
       return {
         isValid: false,
-        missingRequirements: ['Error validating automatic completion'],
+        missingRequirements: ["Error validating automatic completion"],
         canOverride: true,
-        message: 'Error validating automatic completion'
+        message: "Error validating automatic completion",
       };
     }
   },
@@ -316,9 +365,12 @@ export const MilestoneCompletionService = {
   /**
    * Get completed session count for a milestone
    */
-  async getCompletedSessionCount(enrollmentId: string, milestoneId: string): Promise<number> {
+  async getCompletedSessionCount(
+    enrollmentId: string,
+    milestoneId: string,
+  ): Promise<number> {
     try {
-      const { rows } = await pool.query(
+      const { rows } = await db.query(
         `SELECT COUNT(*) as session_count
          FROM milestone_sessions ms
          JOIN bookings b ON ms.booking_id = b.id
@@ -327,7 +379,7 @@ export const MilestoneCompletionService = {
          AND pe.id = $2 
          AND b.status = 'completed'
          AND ms.contributes_to_completion = true`,
-        [milestoneId, enrollmentId]
+        [milestoneId, enrollmentId],
       );
 
       return parseInt(rows[0].session_count, 10);
@@ -335,7 +387,7 @@ export const MilestoneCompletionService = {
       logger.error("Failed to get completed session count", {
         enrollmentId,
         milestoneId,
-        error: error instanceof Error ? error.message : error
+        error: error instanceof Error ? error.message : error,
       });
       return 0;
     }
@@ -348,7 +400,7 @@ export const MilestoneCompletionService = {
     enrollmentId: string,
     milestoneId: string,
     reason: string,
-    mentorId?: string
+    mentorId?: string,
   ): Promise<void> {
     try {
       // Validate enrollment
@@ -359,26 +411,42 @@ export const MilestoneCompletionService = {
 
       // Validate milestone
       const milestone = await MilestoneModel.findById(milestoneId);
-      if (!milestone || milestone.learning_path_id !== enrollment.learning_path_id) {
+      if (
+        !milestone ||
+        milestone.learning_path_id !== enrollment.learning_path_id
+      ) {
         throw createError("Milestone not found in learning path", 404);
       }
 
       // Check if milestone is required (only mentors can skip required milestones)
       if (milestone.is_required && !mentorId) {
-        throw createError("Cannot skip required milestone without mentor approval", 403);
+        throw createError(
+          "Cannot skip required milestone without mentor approval",
+          403,
+        );
       }
 
       // Skip the milestone
-      await MilestoneProgressModel.skipMilestone(enrollmentId, milestoneId, reason);
+      await MilestoneProgressModel.skipMilestone(
+        enrollmentId,
+        milestoneId,
+        reason,
+      );
 
       // Update overall progress
-      const overallProgress = await MilestoneProgressModel.calculateOverallProgress(enrollmentId);
+      const overallProgress =
+        await MilestoneProgressModel.calculateOverallProgress(enrollmentId);
       await EnrollmentModel.updateProgress(enrollmentId, overallProgress);
 
       // Invalidate caches
       await Promise.all([
-        CacheService.del(CacheKeys.studentProgress(enrollment.student_id, enrollment.learning_path_id)),
-        CacheService.del(CacheKeys.enrollmentProgress(enrollmentId))
+        CacheService.del(
+          CacheKeys.studentProgress(
+            enrollment.student_id,
+            enrollment.learning_path_id,
+          ),
+        ),
+        CacheService.del(CacheKeys.enrollmentProgress(enrollmentId)),
       ]);
 
       logger.info("Milestone skipped", {
@@ -386,7 +454,7 @@ export const MilestoneCompletionService = {
         milestoneId,
         reason,
         mentorId,
-        isRequired: milestone.is_required
+        isRequired: milestone.is_required,
       });
     } catch (error) {
       logger.error("Failed to skip milestone", {
@@ -394,7 +462,7 @@ export const MilestoneCompletionService = {
         milestoneId,
         reason,
         mentorId,
-        error: error instanceof Error ? error.message : error
+        error: error instanceof Error ? error.message : error,
       });
       throw error;
     }
@@ -406,7 +474,7 @@ export const MilestoneCompletionService = {
   async resetMilestoneProgress(
     enrollmentId: string,
     milestoneId: string,
-    mentorId: string
+    mentorId: string,
   ): Promise<void> {
     try {
       // Validate mentor has access
@@ -415,7 +483,9 @@ export const MilestoneCompletionService = {
         throw createError("Enrollment not found", 404);
       }
 
-      const learningPath = await LearningPathModel.findById(enrollment.learning_path_id);
+      const learningPath = await LearningPathModel.findById(
+        enrollment.learning_path_id,
+      );
       if (!learningPath || learningPath.mentor_id !== mentorId) {
         throw createError("Access denied", 403);
       }
@@ -424,26 +494,32 @@ export const MilestoneCompletionService = {
       await MilestoneProgressModel.updateProgress(enrollmentId, milestoneId, 0);
 
       // Update overall progress
-      const overallProgress = await MilestoneProgressModel.calculateOverallProgress(enrollmentId);
+      const overallProgress =
+        await MilestoneProgressModel.calculateOverallProgress(enrollmentId);
       await EnrollmentModel.updateProgress(enrollmentId, overallProgress);
 
       // Invalidate caches
       await Promise.all([
-        CacheService.del(CacheKeys.studentProgress(enrollment.student_id, enrollment.learning_path_id)),
-        CacheService.del(CacheKeys.enrollmentProgress(enrollmentId))
+        CacheService.del(
+          CacheKeys.studentProgress(
+            enrollment.student_id,
+            enrollment.learning_path_id,
+          ),
+        ),
+        CacheService.del(CacheKeys.enrollmentProgress(enrollmentId)),
       ]);
 
       logger.info("Milestone progress reset", {
         enrollmentId,
         milestoneId,
-        mentorId
+        mentorId,
       });
     } catch (error) {
       logger.error("Failed to reset milestone progress", {
         enrollmentId,
         milestoneId,
         mentorId,
-        error: error instanceof Error ? error.message : error
+        error: error instanceof Error ? error.message : error,
       });
       throw error;
     }
@@ -455,16 +531,16 @@ export const MilestoneCompletionService = {
   async generateCompletionCertificate(
     enrollmentId: string,
     milestoneId: string,
-    isPathCompletion: boolean = false
+    isPathCompletion: boolean = false,
   ): Promise<boolean> {
     try {
       // TODO: Implement certificate generation
       // This would integrate with a certificate generation service
-      
+
       logger.info("Certificate generation requested", {
         enrollmentId,
         milestoneId,
-        isPathCompletion
+        isPathCompletion,
       });
 
       return false; // Not implemented yet
@@ -473,7 +549,7 @@ export const MilestoneCompletionService = {
         enrollmentId,
         milestoneId,
         isPathCompletion,
-        error: error instanceof Error ? error.message : error
+        error: error instanceof Error ? error.message : error,
       });
       return false;
     }
@@ -482,14 +558,16 @@ export const MilestoneCompletionService = {
   /**
    * Get milestone completion statistics for a learning path
    */
-  async getMilestoneCompletionStats(pathId: string): Promise<{
-    milestoneId: string;
-    title: string;
-    completionRate: number;
-    averageTimeToComplete: number;
-    totalAttempts: number;
-    successfulCompletions: number;
-  }[]> {
+  async getMilestoneCompletionStats(pathId: string): Promise<
+    {
+      milestoneId: string;
+      title: string;
+      completionRate: number;
+      averageTimeToComplete: number;
+      totalAttempts: number;
+      successfulCompletions: number;
+    }[]
+  > {
     try {
       const { rows } = await pool.query(
         `SELECT 
@@ -504,25 +582,26 @@ export const MilestoneCompletionService = {
          WHERE m.learning_path_id = $1
          GROUP BY m.id, m.title, m.order_index
          ORDER BY m.order_index`,
-        [pathId]
+        [pathId],
       );
 
-      return rows.map(row => ({
+      return rows.map((row) => ({
         milestoneId: row.milestone_id,
         title: row.title,
-        completionRate: row.total_attempts > 0 
-          ? (row.successful_completions / row.total_attempts) * 100 
-          : 0,
+        completionRate:
+          row.total_attempts > 0
+            ? (row.successful_completions / row.total_attempts) * 100
+            : 0,
         averageTimeToComplete: parseFloat(row.avg_hours_to_complete),
         totalAttempts: parseInt(row.total_attempts, 10),
-        successfulCompletions: parseInt(row.successful_completions, 10)
+        successfulCompletions: parseInt(row.successful_completions, 10),
       }));
     } catch (error) {
       logger.error("Failed to get milestone completion stats", {
         pathId,
-        error: error instanceof Error ? error.message : error
+        error: error instanceof Error ? error.message : error,
       });
       return [];
     }
-  }
+  },
 };

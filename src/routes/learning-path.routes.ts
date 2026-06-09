@@ -1,9 +1,8 @@
 import { Router } from "express";
 import { LearningPathController } from "../controllers/learning-path.controller";
-import { ProgressController } from "../controllers/progress.controller";
-import { authenticateToken } from "../middleware/auth";
-import { validateRequest } from "../middleware/validation";
-import { body, param, query } from "express-validator";
+import { authenticate as authenticateToken } from "../middleware/auth.middleware";
+import { validationMiddleware as validateRequest } from "../middleware/validation.middleware";
+import { body, param } from "express-validator";
 
 const router = Router();
 
@@ -12,15 +11,7 @@ router.use(authenticateToken);
 
 // Validation middleware
 const validatePathId = [
-  param('pathId').isUUID().withMessage('Invalid path ID format')
-];
-
-const validateEnrollmentId = [
-  param('enrollmentId').isUUID().withMessage('Invalid enrollment ID format')
-];
-
-const validateMilestoneId = [
-  param('milestoneId').isUUID().withMessage('Invalid milestone ID format')
+  param("pathId").isUUID().withMessage("Invalid path ID format"),
 ];
 
 // Learning Path Management Routes
@@ -82,15 +73,24 @@ const validateMilestoneId = [
  *       401:
  *         description: Authentication required
  */
-router.post('/', 
+router.post(
+  "/",
   [
-    body('title').isLength({ min: 1, max: 255 }).withMessage('Title is required and must be less than 255 characters'),
-    body('estimatedDurationHours').isInt({ min: 1 }).withMessage('Estimated duration must be at least 1 hour'),
-    body('difficultyLevel').isIn(['beginner', 'intermediate', 'advanced', 'expert']).withMessage('Invalid difficulty level'),
-    body('milestones').isArray({ min: 1 }).withMessage('At least one milestone is required'),
-    validateRequest
+    body("title")
+      .isLength({ min: 1, max: 255 })
+      .withMessage("Title is required and must be less than 255 characters"),
+    body("estimatedDurationHours")
+      .isInt({ min: 1 })
+      .withMessage("Estimated duration must be at least 1 hour"),
+    body("difficultyLevel")
+      .isIn(["beginner", "intermediate", "advanced", "expert"])
+      .withMessage("Invalid difficulty level"),
+    body("milestones")
+      .isArray({ min: 1 })
+      .withMessage("At least one milestone is required"),
+    validateRequest,
   ],
-  LearningPathController.createPath
+  LearningPathController.createPath,
 );
 
 /**
@@ -141,7 +141,7 @@ router.post('/',
  *       200:
  *         description: Learning paths retrieved successfully
  */
-router.get('/', LearningPathController.getPaths);
+router.get("/", LearningPathController.getPaths);
 
 /**
  * @swagger
@@ -164,7 +164,12 @@ router.get('/', LearningPathController.getPaths);
  *       404:
  *         description: Learning path not found
  */
-router.get('/:pathId', validatePathId, validateRequest, LearningPathController.getPath);
+router.get(
+  "/:pathId",
+  validatePathId,
+  validateRequest,
+  LearningPathController.getPath,
+);
 
 /**
  * @swagger
@@ -189,7 +194,12 @@ router.get('/:pathId', validatePathId, validateRequest, LearningPathController.g
  *       404:
  *         description: Learning path not found
  */
-router.put('/:pathId', validatePathId, validateRequest, LearningPathController.updatePath);
+router.put(
+  "/:pathId",
+  validatePathId,
+  validateRequest,
+  LearningPathController.updatePath,
+);
 
 /**
  * @swagger
@@ -214,7 +224,12 @@ router.put('/:pathId', validatePathId, validateRequest, LearningPathController.u
  *       404:
  *         description: Learning path not found
  */
-router.delete('/:pathId', validatePathId, validateRequest, LearningPathController.deletePath);
+router.delete(
+  "/:pathId",
+  validatePathId,
+  validateRequest,
+  LearningPathController.deletePath,
+);
 
 /**
  * @swagger
@@ -235,7 +250,12 @@ router.delete('/:pathId', validatePathId, validateRequest, LearningPathControlle
  *       200:
  *         description: Learning path published successfully
  */
-router.post('/:pathId/publish', validatePathId, validateRequest, LearningPathController.publishPath);
+router.post(
+  "/:pathId/publish",
+  validatePathId,
+  validateRequest,
+  LearningPathController.publishPath,
+);
 
 /**
  * @swagger
@@ -256,7 +276,12 @@ router.post('/:pathId/publish', validatePathId, validateRequest, LearningPathCon
  *       200:
  *         description: Learning path unpublished successfully
  */
-router.delete('/:pathId/publish', validatePathId, validateRequest, LearningPathController.unpublishPath);
+router.delete(
+  "/:pathId/publish",
+  validatePathId,
+  validateRequest,
+  LearningPathController.unpublishPath,
+);
 
 /**
  * @swagger
@@ -277,7 +302,12 @@ router.delete('/:pathId/publish', validatePathId, validateRequest, LearningPathC
  *       201:
  *         description: Learning path cloned successfully
  */
-router.post('/:pathId/clone', validatePathId, validateRequest, LearningPathController.clonePath);
+router.post(
+  "/:pathId/clone",
+  validatePathId,
+  validateRequest,
+  LearningPathController.clonePath,
+);
 
 // Enrollment Routes
 
@@ -310,7 +340,12 @@ router.post('/:pathId/clone', validatePathId, validateRequest, LearningPathContr
  *       201:
  *         description: Successfully enrolled in learning path
  */
-router.post('/:pathId/enroll', validatePathId, validateRequest, LearningPathController.enrollInPath);
+router.post(
+  "/:pathId/enroll",
+  validatePathId,
+  validateRequest,
+  LearningPathController.enrollInPath,
+);
 
 /**
  * @swagger
@@ -331,7 +366,12 @@ router.post('/:pathId/enroll', validatePathId, validateRequest, LearningPathCont
  *       200:
  *         description: Successfully unenrolled from learning path
  */
-router.delete('/:pathId/enroll', validatePathId, validateRequest, LearningPathController.unenrollFromPath);
+router.delete(
+  "/:pathId/enroll",
+  validatePathId,
+  validateRequest,
+  LearningPathController.unenrollFromPath,
+);
 
 /**
  * @swagger
@@ -365,7 +405,12 @@ router.delete('/:pathId/enroll', validatePathId, validateRequest, LearningPathCo
  *       200:
  *         description: Enrollments retrieved successfully
  */
-router.get('/:pathId/enrollments', validatePathId, validateRequest, LearningPathController.getPathEnrollments);
+router.get(
+  "/:pathId/enrollments",
+  validatePathId,
+  validateRequest,
+  LearningPathController.getPathEnrollments,
+);
 
 /**
  * @swagger
@@ -393,7 +438,7 @@ router.get('/:pathId/enrollments', validatePathId, validateRequest, LearningPath
  *       200:
  *         description: User enrollments retrieved successfully
  */
-router.get('/enrollments', LearningPathController.getUserEnrollments);
+router.get("/enrollments", LearningPathController.getUserEnrollments);
 
 // Progress Tracking Routes (will be implemented in progress.controller.ts)
 
@@ -488,8 +533,8 @@ router.get('/enrollments', LearningPathController.getUserEnrollments);
  *       200:
  *         description: Milestone completed successfully
  */
-// router.post('/enrollments/:enrollmentId/milestones/:milestoneId/complete', 
-//   [...validateEnrollmentId, ...validateMilestoneId, validateRequest], 
+// router.post('/enrollments/:enrollmentId/milestones/:milestoneId/complete',
+//   [...validateEnrollmentId, ...validateMilestoneId, validateRequest],
 //   ProgressController.completeMilestone
 // );
 

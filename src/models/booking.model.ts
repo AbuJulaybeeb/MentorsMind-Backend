@@ -1,4 +1,4 @@
-import pool from "../config/database";
+import { db } from "../config/database";
 
 export interface BookingRecord {
   id: string;
@@ -20,39 +20,6 @@ export interface BookingRecord {
 }
 
 export const BookingModel = {
-  async initializeTable(): Promise<void> {
-    const query = `
-      CREATE TABLE IF NOT EXISTS bookings (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        mentee_id UUID NOT NULL REFERENCES users(id),
-        mentor_id UUID NOT NULL REFERENCES users(id),
-        scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL,
-        duration_minutes INTEGER NOT NULL,
-        topic VARCHAR(500) NOT NULL,
-        notes TEXT,
-        status VARCHAR(20) NOT NULL DEFAULT 'pending',
-        amount DECIMAL(20, 7) NOT NULL,
-        currency VARCHAR(10) NOT NULL DEFAULT 'XLM',
-        payment_status VARCHAR(20) NOT NULL DEFAULT 'pending',
-        stellar_tx_hash VARCHAR(64),
-        transaction_id UUID REFERENCES transactions(id),
-        cancellation_reason TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        CONSTRAINT check_status CHECK (status IN ('pending', 'confirmed', 'completed', 'cancelled', 'rescheduled')),
-        CONSTRAINT check_payment_status CHECK (payment_status IN ('pending', 'paid', 'refunded', 'failed')),
-        CONSTRAINT check_duration CHECK (duration_minutes >= 15 AND duration_minutes <= 240)
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_bookings_mentee_id ON bookings(mentee_id);
-      CREATE INDEX IF NOT EXISTS idx_bookings_mentor_id ON bookings(mentor_id);
-      CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
-      CREATE INDEX IF NOT EXISTS idx_bookings_scheduled_at ON bookings(scheduled_at);
-      CREATE INDEX IF NOT EXISTS idx_bookings_payment_status ON bookings(payment_status);
-    `;
-    await pool.query(query);
-  },
-
   async create(data: {
     menteeId: string;
     mentorId: string;
@@ -63,7 +30,7 @@ export const BookingModel = {
     amount: string;
     currency: string;
   }): Promise<BookingRecord> {
-    const { rows } = await pool.query<BookingRecord>(
+    const { rows } = await db.query(
       `INSERT INTO bookings (mentee_id, mentor_id, scheduled_at, duration_minutes, topic, notes, amount, currency)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
@@ -82,10 +49,9 @@ export const BookingModel = {
   },
 
   async findById(id: string): Promise<BookingRecord | null> {
-    const { rows } = await pool.query<BookingRecord>(
-      `SELECT * FROM bookings WHERE id = $1`,
-      [id],
-    );
+    const { rows } = await db.query(`SELECT * FROM bookings WHERE id = $1`, [
+      id,
+    ]);
     return rows[0] || null;
   },
 
@@ -112,17 +78,26 @@ export const BookingModel = {
     }
 
     const [dataResult, countResult] = await Promise.all([
-      pool.query<BookingRecord>(
+      db.query(
         `SELECT * FROM bookings WHERE ${whereClause} ORDER BY scheduled_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`,
         [...params, limit, offset],
       ),
-      pool.query(`SELECT COUNT(*) FROM bookings WHERE ${whereClause}`, params),
+      db.query(`SELECT COUNT(*) FROM bookings WHERE ${whereClause}`, params),
     ]);
 
     return {
       bookings: dataResult.rows,
       total: parseInt(countResult.rows[0].count, 10),
     };
+  },
+
+  async findByUserIds(userIds: string[]): Promise<BookingRecord[]> {
+    if (userIds.length === 0) return [];
+    const { rows } = await db.query(
+      `SELECT * FROM bookings WHERE mentee_id = ANY($1) OR mentor_id = ANY($1) ORDER BY scheduled_at DESC`,
+      [userIds],
+    );
+    return rows;
   },
 
   async update(
@@ -185,7 +160,7 @@ export const BookingModel = {
     fields.push(`updated_at = NOW()`);
     values.push(id);
 
-    const { rows } = await pool.query<BookingRecord>(
+    const { rows } = await db.query(
       `UPDATE bookings SET ${fields.join(", ")} WHERE id = $${idx} RETURNING *`,
       values,
     );
@@ -218,7 +193,7 @@ export const BookingModel = {
       params.push(excludeBookingId);
     }
 
-    const { rows } = await pool.query(query, params);
+    const { rows } = await db.query(query, params);
     return parseInt(rows[0].count, 10) > 0;
   },
 };

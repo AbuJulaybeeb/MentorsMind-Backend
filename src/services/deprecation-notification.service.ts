@@ -1,13 +1,16 @@
 /**
  * Deprecation Notification Service
- * 
+ *
  * Handles notifications to users about deprecated endpoints,
  * including email, in-app notifications, and dashboard alerts.
  */
 
-import deprecationManager from '../utils/deprecation.utils';
-import { getUpcomingSunsets, getSunsetEndpoints } from '../config/deprecation-registry';
-import { logInfo, logWarning } from '../utils/error.utils';
+import deprecationManager from "../utils/deprecation.utils";
+import {
+  getUpcomingSunsets,
+  getSunsetEndpoints,
+} from "../config/deprecation-registry";
+import { logInfo, logWarning } from "../utils/error.utils";
 
 export interface NotificationRecipient {
   userId: string;
@@ -29,7 +32,7 @@ class DeprecationNotificationService {
    */
   async notifyUsers(
     recipients: NotificationRecipient[],
-    notification: DeprecationNotification
+    notification: DeprecationNotification,
   ): Promise<void> {
     logInfo(`Sending deprecation notification to ${recipients.length} users`, {
       endpoint: notification.endpoint,
@@ -54,21 +57,13 @@ class DeprecationNotificationService {
    */
   private async sendEmailNotifications(
     recipients: NotificationRecipient[],
-    notification: DeprecationNotification
+    notification: DeprecationNotification,
   ): Promise<void> {
     // This would integrate with your email service
     // Example: SendGrid, AWS SES, etc.
 
-    const emailTemplate = this.generateEmailTemplate(notification);
-
     for (const recipient of recipients) {
       try {
-        // await emailService.send({
-        //   to: recipient.email,
-        //   subject: `API Deprecation Notice: ${notification.endpoint}`,
-        //   html: emailTemplate,
-        // });
-
         logInfo(`Email sent to ${recipient.email}`, {
           endpoint: notification.endpoint,
           userId: recipient.userId,
@@ -87,25 +82,13 @@ class DeprecationNotificationService {
    */
   private async createInAppNotifications(
     recipients: NotificationRecipient[],
-    notification: DeprecationNotification
+    notification: DeprecationNotification,
   ): Promise<void> {
     // This would integrate with your notification system
     // Example: Database notifications, push notifications, etc.
 
     for (const recipient of recipients) {
       try {
-        // await notificationService.create({
-        //   userId: recipient.userId,
-        //   type: 'deprecation',
-        //   title: `API Endpoint Deprecated: ${notification.endpoint}`,
-        //   message: this.generateNotificationMessage(notification),
-        //   data: {
-        //     endpoint: notification.endpoint,
-        //     replacementEndpoint: notification.replacementEndpoint,
-        //     migrationGuide: notification.migrationGuide,
-        //   },
-        // });
-
         logInfo(`In-app notification created for ${recipient.userId}`, {
           endpoint: notification.endpoint,
         });
@@ -123,11 +106,14 @@ class DeprecationNotificationService {
    */
   private generateEmailTemplate(notification: DeprecationNotification): string {
     const daysUntilSunset = notification.daysUntilSunset;
-    const sunsetDateFormatted = notification.sunsetDate.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+    const sunsetDateFormatted = notification.sunsetDate.toLocaleDateString(
+      "en-US",
+      {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      },
+    );
 
     return `
       <!DOCTYPE html>
@@ -164,7 +150,7 @@ class DeprecationNotificationService {
               <h3>Replacement Endpoint</h3>
               <p><code>${notification.replacementEndpoint}</code></p>
             `
-                : ''
+                : ""
             }
 
             <div class="action-items">
@@ -184,7 +170,7 @@ class DeprecationNotificationService {
               <p>For detailed migration instructions, please visit:</p>
               <p><a href="${notification.migrationGuide}">${notification.migrationGuide}</a></p>
             `
-                : ''
+                : ""
             }
 
             <h3>Timeline</h3>
@@ -214,15 +200,19 @@ class DeprecationNotificationService {
   /**
    * Generate notification message
    */
-  private generateNotificationMessage(notification: DeprecationNotification): string {
+  private generateNotificationMessage(
+    notification: DeprecationNotification,
+  ): string {
     return `The API endpoint ${notification.endpoint} will be removed on ${notification.sunsetDate.toLocaleDateString()}. 
-    ${notification.replacementEndpoint ? `Please migrate to ${notification.replacementEndpoint}.` : 'Please review the migration guide.'}`;
+    ${notification.replacementEndpoint ? `Please migrate to ${notification.replacementEndpoint}.` : "Please review the migration guide."}`;
   }
 
   /**
    * Send batch notifications for all upcoming sunsets
    */
-  async sendUpcomingSunsetNotifications(recipients: NotificationRecipient[]): Promise<void> {
+  async sendUpcomingSunsetNotifications(
+    recipients: NotificationRecipient[],
+  ): Promise<void> {
     const upcoming = getUpcomingSunsets();
 
     logInfo(`Sending notifications for ${upcoming.length} upcoming sunsets`, {
@@ -233,7 +223,8 @@ class DeprecationNotificationService {
       const deprecation = deprecationManager.getDeprecation(item.endpoint);
       if (deprecation) {
         const daysUntilSunset = Math.ceil(
-          (deprecation.sunsetDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+          (deprecation.sunsetDate.getTime() - new Date().getTime()) /
+            (1000 * 60 * 60 * 24),
         );
 
         await this.notifyUsers(recipients, {
@@ -256,7 +247,8 @@ class DeprecationNotificationService {
       if (!deprecation) return false;
 
       const daysUntilSunset = Math.ceil(
-        (deprecation.sunsetDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+        (deprecation.sunsetDate.getTime() - new Date().getTime()) /
+          (1000 * 60 * 60 * 24),
       );
 
       return daysUntilSunset <= 7;
@@ -270,7 +262,8 @@ class DeprecationNotificationService {
       const deprecation = deprecationManager.getDeprecation(item.endpoint);
       if (deprecation) {
         const daysUntilSunset = Math.ceil(
-          (deprecation.sunsetDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+          (deprecation.sunsetDate.getTime() - new Date().getTime()) /
+            (1000 * 60 * 60 * 24),
         );
 
         await this.notifyUsers(recipients, {
@@ -287,7 +280,9 @@ class DeprecationNotificationService {
   /**
    * Send notification about removed endpoints
    */
-  async sendRemovalNotifications(recipients: NotificationRecipient[]): Promise<void> {
+  async sendRemovalNotifications(
+    recipients: NotificationRecipient[],
+  ): Promise<void> {
     const sunset = getSunsetEndpoints();
 
     logInfo(`Sending removal notifications for ${sunset.length} endpoints`, {

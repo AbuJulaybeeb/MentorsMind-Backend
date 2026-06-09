@@ -16,29 +16,36 @@ export interface GraphQLLoaders {
 
 export const createLoaders = (): GraphQLLoaders => ({
   userLoader: new DataLoader<string, PublicUserRecord | null>(async (ids) => {
-    // UsersService currently only exposes single-id fetch.
-    // Keeping as-is (batch still provides deduplication per request).
-    const results = await Promise.all(
-      ids.map((id) => UsersService.findPublicById(id)),
-    );
-    return results;
+    const uniqueIds = Array.from(new Set(ids));
+    const users = await UsersService.findPublicByIds(uniqueIds);
+    const userMap = new Map(users.map((u) => [u.id, u]));
+    return ids.map((id) => userMap.get(id) || null);
   }),
 
   mentorLoader: new DataLoader<string, MentorRecord | null>(async (ids) => {
-    const results = await Promise.all(
-      ids.map((id) => MentorsService.findById(id)),
-    );
-    return results;
+    const uniqueIds = Array.from(new Set(ids));
+    const mentors = await MentorsService.findByIds(uniqueIds);
+    const mentorMap = new Map(mentors.map((m) => [m.id, m]));
+    return ids.map((id) => mentorMap.get(id) || null);
   }),
 
   bookingLoader: new DataLoader<string, BookingRecord[]>(async (ids) => {
-    // Bulk fetch bookings per user is non-trivial because BookingModel.findByUserId is a single-id query
-    // that applies (mentee_id = $1 OR mentor_id = $1). For now we keep per-id calls.
-    // This is still better than raw resolvers because DataLoader batches at the GraphQL field layer.
-    const results = await Promise.all(
-      ids.map((id) => BookingModel.findByUserId(id).then((r) => r.bookings)),
-    );
-    return results;
+    const uniqueIds = Array.from(new Set(ids));
+    const allBookings = await BookingModel.findByUserIds(uniqueIds);
+
+    const grouped = new Map<string, BookingRecord[]>();
+    uniqueIds.forEach((id) => grouped.set(id, []));
+
+    allBookings.forEach((booking) => {
+      if (grouped.has(booking.mentee_id)) {
+        grouped.get(booking.mentee_id)!.push(booking);
+      }
+      if (grouped.has(booking.mentor_id)) {
+        grouped.get(booking.mentor_id)!.push(booking);
+      }
+    });
+
+    return ids.map((id) => grouped.get(id) || []);
   }),
 
   paymentLoader: new DataLoader<string, Payment[]>(async (ids) => {

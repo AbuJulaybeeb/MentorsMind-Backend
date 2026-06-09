@@ -1,5 +1,7 @@
-import pool from '../config/database';
-import { CollaborationState } from '../types/collaboration.types';
+import pool, { db } from "../config/database";
+import { CollaborationState } from "../types/collaboration.types";
+import { PaginationUtil } from "../utils/pagination.utils";
+import { logger } from "../utils/logger";
 
 export interface Session {
   id: string;
@@ -7,13 +9,9 @@ export interface Session {
   learner_id: string;
   start_time: Date;
   end_time: Date;
-  status: 'scheduled' | 'completed' | 'cancelled';
+  status: "scheduled" | "completed" | "cancelled";
   created_at: Date;
 }
-
-import pool from "../config/database";
-import { PaginationUtil } from "../utils/pagination.utils";
-import { logger } from "../utils/logger";
 
 export interface SessionRecord {
   id: string;
@@ -61,45 +59,6 @@ export interface UpdateCollaborationStatePayload {
  */
 export const SessionModel = {
   /**
-   * Initialize sessions table with meeting URL support and collaboration storage
-   */
-  async initializeTable(): Promise<void> {
-    const query = `
-      CREATE TABLE IF NOT EXISTS sessions (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        mentor_id UUID NOT NULL REFERENCES users(id),
-        mentee_id UUID NOT NULL REFERENCES users(id),
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL,
-        duration_minutes INTEGER NOT NULL DEFAULT 60,
-        status VARCHAR(20) NOT NULL DEFAULT 'scheduled',
-        meeting_link VARCHAR(500),
-        meeting_url VARCHAR(500),
-        meeting_provider VARCHAR(50),
-        meeting_room_id VARCHAR(255),
-        meeting_expires_at TIMESTAMP WITH TIME ZONE,
-        needs_manual_intervention BOOLEAN DEFAULT FALSE,
-        collaboration_state JSONB,
-        notes TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-      );
-
-      CREATE INDEX IF NOT EXISTS idx_sessions_mentor_id ON sessions(mentor_id);
-      CREATE INDEX IF NOT EXISTS idx_sessions_mentee_id ON sessions(mentee_id);
-      CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
-      CREATE INDEX IF NOT EXISTS idx_sessions_scheduled_at ON sessions(scheduled_at);
-      CREATE INDEX IF NOT EXISTS idx_sessions_meeting_url ON sessions(meeting_url) WHERE meeting_url IS NOT NULL;
-      CREATE INDEX IF NOT EXISTS idx_sessions_meeting_expires_at ON sessions(meeting_expires_at) WHERE meeting_expires_at IS NOT NULL;
-      CREATE INDEX IF NOT EXISTS idx_sessions_needs_manual_intervention ON sessions(needs_manual_intervention) WHERE needs_manual_intervention = TRUE;
-      CREATE INDEX IF NOT EXISTS idx_sessions_collaboration_state ON sessions USING gin (collaboration_state);
-    `;
-
-    await pool.query(query);
-  },
-
-  /**
    * Create a new session
    */
   async create(payload: CreateSessionPayload): Promise<SessionRecord> {
@@ -110,7 +69,7 @@ export const SessionModel = {
     `;
 
     const defaultState = null;
-    const { rows } = await pool.query<SessionRecord>(query, [
+    const { rows } = await db.query(query, [
       payload.mentorId,
       payload.menteeId,
       payload.title,
@@ -128,7 +87,7 @@ export const SessionModel = {
    */
   async findById(id: string): Promise<SessionRecord | null> {
     const query = "SELECT * FROM sessions WHERE id = $1";
-    const { rows } = await pool.query<SessionRecord>(query, [id]);
+    const { rows } = await db.query(query, [id]);
     return rows[0] ?? null;
   },
 
@@ -286,7 +245,10 @@ export const SessionModel = {
       RETURNING *
     `;
 
-    const { rows } = await pool.query<SessionRecord>(query, [collaborationState, id]);
+    const { rows } = await pool.query<SessionRecord>(query, [
+      collaborationState,
+      id,
+    ]);
     return rows[0] ?? null;
   },
 
@@ -369,30 +331,6 @@ export const SessionModel = {
    * Returns number of archived sessions.
    */
   async archiveOlderThanYears(years: number): Promise<number> {
-    // Ensure archive table exists (small, safe DDL guard)
-    const createArchiveTable = `
-      CREATE TABLE IF NOT EXISTS sessions_archive (
-        id UUID PRIMARY KEY,
-        mentor_id UUID NOT NULL,
-        mentee_id UUID NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        description TEXT,
-        scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL,
-        duration_minutes INTEGER NOT NULL DEFAULT 60,
-        status VARCHAR(20),
-        meeting_link VARCHAR(500),
-        meeting_url VARCHAR(500),
-        meeting_provider VARCHAR(50),
-        meeting_room_id VARCHAR(255),
-        meeting_expires_at TIMESTAMP WITH TIME ZONE,
-        needs_manual_intervention BOOLEAN,
-        notes TEXT,
-        created_at TIMESTAMP WITH TIME ZONE,
-        updated_at TIMESTAMP WITH TIME ZONE,
-        archived_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-      );
-    `;
-
     const moveQuery = `
       WITH moved AS (
         DELETE FROM sessions
@@ -406,15 +344,14 @@ export const SessionModel = {
     `;
 
     try {
-      await pool.query(createArchiveTable);
       const { rowCount } = await pool.query(moveQuery, [years]);
       const moved = rowCount ?? 0;
       if (moved > 0) {
-        logger.info('SessionModel: archived old sessions', { years, moved });
+        logger.info("SessionModel: archived old sessions", { years, moved });
       }
       return moved;
     } catch (error) {
-      logger.error('Failed to archive old sessions:', error);
+      logger.error("Failed to archive old sessions:", error);
       return 0;
     }
   },

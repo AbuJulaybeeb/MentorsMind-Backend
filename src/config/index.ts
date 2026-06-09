@@ -2,6 +2,7 @@ import { env } from "./env";
 import monitoringConfig from "./monitoring.config";
 import retentionConfig from "./retention.config";
 import elasticsearchConfig from "./elasticsearch.config";
+import recordingConfig from "./recording.config";
 
 const config = {
   env: env.NODE_ENV,
@@ -80,7 +81,9 @@ const config = {
 
   redis: {
     url: env.REDIS_URL,
-    clusterNodes: env.REDIS_CLUSTER_NODES ? env.REDIS_CLUSTER_NODES.split(',').map((s: string) => s.trim()) : undefined,
+    clusterNodes: env.REDIS_CLUSTER_NODES
+      ? env.REDIS_CLUSTER_NODES.split(",").map((s: string) => s.trim())
+      : undefined,
     clusterEnabled: env.REDIS_CLUSTER_ENABLED === "true",
     tlsEnabled: env.REDIS_TLS_ENABLED === "true",
   },

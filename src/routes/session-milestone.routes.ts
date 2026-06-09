@@ -1,8 +1,7 @@
 import { Router } from "express";
 import { SessionMilestoneController } from "../controllers/session-milestone.controller";
-import { authenticateToken } from "../middleware/auth";
-import { validateRequest } from "../middleware/validation";
-import { rateLimitMiddleware } from "../middleware/rateLimit";
+import { authenticate as authenticateToken } from "../middleware/auth.middleware";
+import { apiLimiter as rateLimitMiddleware } from "../middleware/rate-limit.middleware";
 
 const router = Router();
 
@@ -36,7 +35,7 @@ router.use(rateLimitMiddleware);
  *         createdAt:
  *           type: string
  *           format: date-time
- *     
+ *
  *     SessionContext:
  *       type: object
  *       properties:
@@ -58,7 +57,7 @@ router.use(rateLimitMiddleware);
  *         sessionType:
  *           type: string
  *           enum: [milestone, support, assessment]
- *     
+ *
  *     AvailableSession:
  *       type: object
  *       properties:
@@ -75,7 +74,7 @@ router.use(rateLimitMiddleware);
  *           type: boolean
  *         prerequisitesMet:
  *           type: boolean
- *     
+ *
  *     SessionOutcome:
  *       type: object
  *       properties:
@@ -179,7 +178,10 @@ router.use(rateLimitMiddleware);
  *       409:
  *         description: Session already linked to a milestone
  */
-router.post("/sessions/:bookingId/milestone", SessionMilestoneController.linkSessionToMilestone);
+router.post(
+  "/sessions/:bookingId/milestone",
+  SessionMilestoneController.linkSessionToMilestone,
+);
 
 /**
  * @swagger
@@ -202,7 +204,10 @@ router.post("/sessions/:bookingId/milestone", SessionMilestoneController.linkSes
  *       404:
  *         description: Session not linked to any milestone
  */
-router.delete("/sessions/:bookingId/milestone", SessionMilestoneController.unlinkSessionFromMilestone);
+router.delete(
+  "/sessions/:bookingId/milestone",
+  SessionMilestoneController.unlinkSessionFromMilestone,
+);
 
 /**
  * @swagger
@@ -242,7 +247,10 @@ router.delete("/sessions/:bookingId/milestone", SessionMilestoneController.unlin
  *                 data:
  *                   $ref: '#/components/schemas/SessionMilestoneMapping'
  */
-router.patch("/sessions/:bookingId/milestone", SessionMilestoneController.updateSessionMapping);
+router.patch(
+  "/sessions/:bookingId/milestone",
+  SessionMilestoneController.updateSessionMapping,
+);
 
 /**
  * @swagger
@@ -270,7 +278,10 @@ router.patch("/sessions/:bookingId/milestone", SessionMilestoneController.update
  *                 data:
  *                   $ref: '#/components/schemas/SessionContext'
  */
-router.get("/sessions/:bookingId/context", SessionMilestoneController.getSessionContext);
+router.get(
+  "/sessions/:bookingId/context",
+  SessionMilestoneController.getSessionContext,
+);
 
 /**
  * @swagger
@@ -300,7 +311,10 @@ router.get("/sessions/:bookingId/context", SessionMilestoneController.getSession
  *                   items:
  *                     $ref: '#/components/schemas/AvailableSession'
  */
-router.get("/milestones/:milestoneId/sessions/available", SessionMilestoneController.getAvailableSessionsForMilestone);
+router.get(
+  "/milestones/:milestoneId/sessions/available",
+  SessionMilestoneController.getAvailableSessionsForMilestone,
+);
 
 /**
  * @swagger
@@ -335,7 +349,10 @@ router.get("/milestones/:milestoneId/sessions/available", SessionMilestoneContro
  *                           booking:
  *                             type: object
  */
-router.get("/milestones/:milestoneId/sessions", SessionMilestoneController.getSessionsForMilestone);
+router.get(
+  "/milestones/:milestoneId/sessions",
+  SessionMilestoneController.getSessionsForMilestone,
+);
 
 /**
  * @swagger
@@ -403,7 +420,10 @@ router.get("/milestones/:milestoneId/sessions", SessionMilestoneController.getSe
  *                     isLearningPathIntegrated:
  *                       type: boolean
  */
-router.post("/bookings/contextual", SessionMilestoneController.createContextualBooking);
+router.post(
+  "/bookings/contextual",
+  SessionMilestoneController.createContextualBooking,
+);
 
 /**
  * @swagger
@@ -439,7 +459,10 @@ router.post("/bookings/contextual", SessionMilestoneController.createContextualB
  *                   items:
  *                     type: object
  */
-router.get("/bookings/context/:mentorId/:studentId", SessionMilestoneController.getLearningPathContext);
+router.get(
+  "/bookings/context/:mentorId/:studentId",
+  SessionMilestoneController.getLearningPathContext,
+);
 
 /**
  * @swagger
@@ -475,7 +498,10 @@ router.get("/bookings/context/:mentorId/:studentId", SessionMilestoneController.
  *                   items:
  *                     type: object
  */
-router.get("/bookings/recommendations/:mentorId/:studentId", SessionMilestoneController.getBookingRecommendations);
+router.get(
+  "/bookings/recommendations/:mentorId/:studentId",
+  SessionMilestoneController.getBookingRecommendations,
+);
 
 /**
  * @swagger
@@ -518,7 +544,10 @@ router.get("/bookings/recommendations/:mentorId/:studentId", SessionMilestoneCon
  *                     recommendations:
  *                       type: array
  */
-router.get("/bookings/options/:mentorId/:studentId", SessionMilestoneController.getBookingOptions);
+router.get(
+  "/bookings/options/:mentorId/:studentId",
+  SessionMilestoneController.getBookingOptions,
+);
 
 /**
  * @swagger
@@ -583,7 +612,10 @@ router.get("/bookings/options/:mentorId/:studentId", SessionMilestoneController.
  *                 data:
  *                   $ref: '#/components/schemas/SessionOutcome'
  */
-router.post("/sessions/:bookingId/outcome", SessionMilestoneController.createSessionOutcome);
+router.post(
+  "/sessions/:bookingId/outcome",
+  SessionMilestoneController.createSessionOutcome,
+);
 
 /**
  * @swagger
@@ -611,7 +643,10 @@ router.post("/sessions/:bookingId/outcome", SessionMilestoneController.createSes
  *                 data:
  *                   $ref: '#/components/schemas/SessionOutcome'
  */
-router.get("/sessions/:bookingId/outcome", SessionMilestoneController.getSessionOutcome);
+router.get(
+  "/sessions/:bookingId/outcome",
+  SessionMilestoneController.getSessionOutcome,
+);
 
 /**
  * @swagger
@@ -639,7 +674,10 @@ router.get("/sessions/:bookingId/outcome", SessionMilestoneController.getSession
  *                 data:
  *                   type: object
  */
-router.get("/sessions/:bookingId/impact", SessionMilestoneController.analyzeSessionImpact);
+router.get(
+  "/sessions/:bookingId/impact",
+  SessionMilestoneController.analyzeSessionImpact,
+);
 
 /**
  * @swagger
@@ -680,7 +718,10 @@ router.get("/sessions/:bookingId/impact", SessionMilestoneController.analyzeSess
  *                       type: string
  *                       enum: [milestone, support, assessment]
  */
-router.get("/mentors/:mentorId/hybrid-config", SessionMilestoneController.getHybridModeConfig);
+router.get(
+  "/mentors/:mentorId/hybrid-config",
+  SessionMilestoneController.getHybridModeConfig,
+);
 
 /**
  * @swagger
@@ -724,6 +765,9 @@ router.get("/mentors/:mentorId/hybrid-config", SessionMilestoneController.getHyb
  *                 data:
  *                   type: object
  */
-router.patch("/mentors/:mentorId/hybrid-config", SessionMilestoneController.updateHybridModeConfig);
+router.patch(
+  "/mentors/:mentorId/hybrid-config",
+  SessionMilestoneController.updateHybridModeConfig,
+);
 
 export default router;

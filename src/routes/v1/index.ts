@@ -29,11 +29,26 @@ import bulkRoutes from "../bulk.routes";
 import integrationsRoutes from "../integrations.routes";
 import notesRoutes from "../notes.routes";
 import deepLinkRoutes from "../deepLink.routes";
+import goalRoutes from "../goal.routes";
+import learnerRoutes from "../learner.routes";
+import webhookRoutes from "../webhooks.routes";
+import learningPathRoutes from "../learning-path.routes";
+import progressRoutes from "../progress.routes";
+import sessionMilestoneRoutes from "../session-milestone.routes";
+import notificationsRoutes from "../notifications.routes";
+import certificationRoutes from "../certification.routes";
+import referralRoutes from "../referral.routes";
+import eventsRoutes from "../events.routes";
+import sessionQualityRoutes from "../session-quality.routes";
+import apiDocsPortalRoutes from "../api-docs-portal.routes";
+import tenantRoutes from "../tenant.routes";
+import dynamicPricingRoutes from "../dynamic-pricing.routes";
+import mentorOnboardingRoutes from "../mentor-onboarding.routes";
+
 import { BookingsService } from "../../services/bookings.service";
 import { logger } from "../../utils/logger";
 import { notificationCleanupService } from "../../services/notification-cleanup.service";
-import { adminAllowlistMiddleware } from "../middleware/ipFilter.middleware";
-import { asyncHandler } from "../../utils/asyncHandler.utils";
+import { adminAllowlistMiddleware } from "../../middleware/ipFilter.middleware";
 
 const router = Router();
 
@@ -47,17 +62,6 @@ notificationCleanupService.initialize().catch((err: unknown) => {
   logger.error("Failed to initialize notification cleanup service:", err);
 });
 
-import goalRoutes from "../goal.routes";
-import learnerRoutes from "../learner.routes";
-import webhookRoutes from "../webhooks.routes";
-import learningPathRoutes from "../learning-path.routes";
-import progressRoutes from "../progress.routes";
-import sessionMilestoneRoutes from "../session-milestone.routes";
-import notificationsRoutes from "../notifications.routes";
-import certificationRoutes from "../certification.routes";
-import referralRoutes from "../referral.routes";
-import eventsRoutes from "../events.routes";
-
 router.use("/auth", authRoutes);
 router.use("/users", usersRoutes);
 router.use("/goals", goalRoutes);
@@ -68,7 +72,7 @@ router.use("/compliance", complianceRoutes);
 router.use("/bulk", bulkRoutes);
 
 // Apply IP whitelisting to all admin routes
-router.use("/admin", asyncHandler(adminAllowlistMiddleware));
+router.use("/admin", adminAllowlistMiddleware);
 router.use("/admin", adminRoutes);
 router.use("/admin/moderation", moderationRoutes);
 
@@ -98,24 +102,18 @@ router.use("/referrals", referralRoutes);
 router.use("/events", eventsRoutes);
 
 // Session Quality Analytics (issue #538)
-import sessionQualityRoutes from "../session-quality.routes";
 router.use("/session-quality", sessionQualityRoutes);
 
 // API Documentation Portal (issue #537)
-import apiDocsPortalRoutes from "../api-docs-portal.routes";
 router.use("/docs", apiDocsPortalRoutes);
-
-import tenantRoutes from "../tenant.routes";
 
 // Multi-tenant routes
 router.use("/tenants", tenantRoutes);
 
 // Dynamic Pricing Engine (issue #560)
-import dynamicPricingRoutes from "../dynamic-pricing.routes";
 router.use("/pricing", dynamicPricingRoutes);
 
 // Mentor Onboarding Automation (issue #562)
-import mentorOnboardingRoutes from "../mentor-onboarding.routes";
 router.use("/onboarding", mentorOnboardingRoutes);
 
 export default router;

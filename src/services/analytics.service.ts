@@ -1,4 +1,4 @@
-import pool from "../config/database";
+import pool, { db } from "../config/database";
 import { CacheService } from "./cache.service";
 import { logger } from "../utils/logger";
 
@@ -62,7 +62,7 @@ export const AnalyticsService = {
    */
   async checkViewsExist(): Promise<boolean> {
     const now = Date.now();
-    
+
     // Use cached result if recent
     if (viewsAvailable && now - lastViewCheck < VIEW_CHECK_INTERVAL) {
       return true;
@@ -85,8 +85,8 @@ export const AnalyticsService = {
           AND table_name = ANY($1::text[])
       `;
 
-      const { rows } = await pool.query(query, [requiredViews]);
-      const foundViews = rows.map((r) => r.table_name);
+      const { rows } = await db.query(query, [requiredViews]);
+      const foundViews = rows.map((r: any) => r.table_name);
       const allExist = requiredViews.every((v) => foundViews.includes(v));
 
       viewsAvailable = allExist;
@@ -114,7 +114,7 @@ export const AnalyticsService = {
     const available = await this.checkViewsExist();
     if (!available) {
       throw new AnalyticsViewsUnavailableError(
-        "Analytics views not yet available. Please run migration 015_analytics_views.sql and refresh the views."
+        "Analytics views not yet available. Please run migration 015_analytics_views.sql and refresh the views.",
       );
     }
   },
@@ -157,13 +157,18 @@ export const AnalyticsService = {
           ORDER BY date DESC
         `;
 
-        const { rows } = await pool.query<RevenueData>(query, [days]);
+        const { rows } = await db.query(query, [days]);
 
-        logger.debug("Revenue analytics fetched", { period, rows: rows.length });
+        logger.debug("Revenue analytics fetched", {
+          period,
+          rows: rows.length,
+        });
         return rows;
       } catch (error) {
         if (error instanceof AnalyticsViewsUnavailableError) {
-          logger.warn("Revenue analytics unavailable", { error: error.message });
+          logger.warn("Revenue analytics unavailable", {
+            error: error.message,
+          });
           throw error;
         }
         logger.error("Failed to fetch revenue analytics", { error, period });
@@ -195,7 +200,7 @@ export const AnalyticsService = {
           ORDER BY date DESC
         `;
 
-        const { rows } = await pool.query<UserGrowthData>(query, [days]);
+        const { rows } = await db.query(query, [days]);
 
         logger.debug("User growth analytics fetched", {
           period,
@@ -204,10 +209,15 @@ export const AnalyticsService = {
         return rows;
       } catch (error) {
         if (error instanceof AnalyticsViewsUnavailableError) {
-          logger.warn("User growth analytics unavailable", { error: error.message });
+          logger.warn("User growth analytics unavailable", {
+            error: error.message,
+          });
           throw error;
         }
-        logger.error("Failed to fetch user growth analytics", { error, period });
+        logger.error("Failed to fetch user growth analytics", {
+          error,
+          period,
+        });
         throw error;
       }
     });
@@ -236,13 +246,18 @@ export const AnalyticsService = {
           ORDER BY date DESC
         `;
 
-        const { rows } = await pool.query<SessionData>(query, [days]);
+        const { rows } = await db.query(query, [days]);
 
-        logger.debug("Session analytics fetched", { period, rows: rows.length });
+        logger.debug("Session analytics fetched", {
+          period,
+          rows: rows.length,
+        });
         return rows;
       } catch (error) {
         if (error instanceof AnalyticsViewsUnavailableError) {
-          logger.warn("Session analytics unavailable", { error: error.message });
+          logger.warn("Session analytics unavailable", {
+            error: error.message,
+          });
           throw error;
         }
         logger.error("Failed to fetch session analytics", { error, period });
@@ -276,7 +291,7 @@ export const AnalyticsService = {
           LIMIT $1
         `;
 
-        const { rows } = await pool.query<TopMentor>(query, [limit]);
+        const { rows } = await db.query(query, [limit]);
 
         logger.debug("Top mentors analytics fetched", {
           limit,
@@ -285,7 +300,9 @@ export const AnalyticsService = {
         return rows;
       } catch (error) {
         if (error instanceof AnalyticsViewsUnavailableError) {
-          logger.warn("Top mentors analytics unavailable", { error: error.message });
+          logger.warn("Top mentors analytics unavailable", {
+            error: error.message,
+          });
           throw error;
         }
         logger.error("Failed to fetch top mentors analytics", { error, limit });
@@ -314,7 +331,7 @@ export const AnalyticsService = {
           ORDER BY total_volume DESC
         `;
 
-        const { rows } = await pool.query<AssetDistribution>(query);
+        const { rows } = await db.query(query);
 
         logger.debug("Asset distribution analytics fetched", {
           rows: rows.length,
@@ -322,7 +339,9 @@ export const AnalyticsService = {
         return rows;
       } catch (error) {
         if (error instanceof AnalyticsViewsUnavailableError) {
-          logger.warn("Asset distribution analytics unavailable", { error: error.message });
+          logger.warn("Asset distribution analytics unavailable", {
+            error: error.message,
+          });
           throw error;
         }
         logger.error("Failed to fetch asset distribution analytics", { error });
@@ -433,7 +452,7 @@ export const AnalyticsService = {
       logger.info("AnalyticsService initialized - all views available");
     } else {
       logger.warn(
-        "AnalyticsService initialized - views missing. Run migration 015_analytics_views.sql"
+        "AnalyticsService initialized - views missing. Run migration 015_analytics_views.sql",
       );
     }
   },

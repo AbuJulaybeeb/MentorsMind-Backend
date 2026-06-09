@@ -1,4 +1,4 @@
-import pool from "../config/database";
+import { db } from "../config/database";
 import { server } from "../config/stellar";
 import config from "../config";
 import { redisConfig } from "../config/redis.config";
@@ -196,7 +196,7 @@ export class HealthService {
   private static async checkDatabase(): Promise<HealthComponent> {
     const start = Date.now();
     try {
-      await pool.query("SELECT 1");
+      await db.query("SELECT 1");
       return { status: "healthy", responseTimeMs: Date.now() - start };
     } catch (err: any) {
       return {
@@ -258,8 +258,8 @@ export class HealthService {
           AND table_name = ANY($1::text[])
       `;
 
-      const { rows } = await pool.query(query, [requiredViews]);
-      const foundViews = rows.map((r) => r.table_name);
+      const { rows } = await db.query(query, [requiredViews]);
+      const foundViews = rows.map((r: any) => r.table_name);
       const allExist = requiredViews.every((v) => foundViews.includes(v));
       const responseTimeMs = Date.now() - start;
 
