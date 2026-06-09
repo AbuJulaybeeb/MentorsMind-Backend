@@ -48,8 +48,8 @@ import { validateRequiredTables } from "./utils/table-validator.utils";
 import { startPoolMonitor, stopPoolMonitor } from "./utils/pool-monitor.utils";
 
 // Import queues for side effects
-import "../queues/bulk.queue";
-import "../queues/export.queue";
+import "./queues/bulk.queue";
+import "./queues/export.queue";
 
 const { port: PORT, apiVersion: API_VERSION } = config.server;
 const NODE_ENV = config.env;
