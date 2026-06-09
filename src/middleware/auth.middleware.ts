@@ -11,8 +11,11 @@ const lastActiveDebounce = new Map<string, number>();
 
 export interface AuthenticatedRequest extends Request {
   user?: {
+    id: string;
     userId: string;
+    email?: string;
     role: string;
+    mfaVerified?: boolean;
   };
 }
 

@@ -126,6 +126,8 @@ const TEMPLATES: TemplateSeed[] = [
       "platformUrl",
       "supportUrl",
     ],
+  },
+  {
     id: "account_deletion_requested",
     name: "Account Deletion Requested",
     type: "email",

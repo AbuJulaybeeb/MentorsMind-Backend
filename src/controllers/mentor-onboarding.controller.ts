@@ -20,7 +20,7 @@ export const MentorOnboardingController = {
 
   completeStep: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.userId;
-    const { stepId } = req.params;
+    const { stepId } = req.params as Record<string, string>;
     const onboarding = await MentorOnboardingService.completeStep(userId, stepId);
     return ResponseUtil.success(res, { onboarding }, 'Step completed');
   }),
@@ -78,7 +78,7 @@ export const MentorOnboardingController = {
 
   completeChecklistItem: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.userId;
-    const { itemKey } = req.params;
+    const { itemKey } = req.params as Record<string, string>;
     await MentorOnboardingService.completeChecklistItem(userId, itemKey);
     return ResponseUtil.success(res, null, 'Checklist item completed');
   }),

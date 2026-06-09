@@ -72,7 +72,7 @@ export const AdvancedAnalyticsController = {
 
       // Handle CSV export
       if (format === "csv") {
-        const csv = await this.exportRevenueToCSV(data, period);
+        const csv = await AdvancedAnalyticsController.exportRevenueToCSV(data, period);
         res.setHeader("Content-Type", "text/csv");
         res.setHeader(
           "Content-Disposition",
@@ -106,7 +106,7 @@ export const AdvancedAnalyticsController = {
 
       // Handle CSV export
       if (format === "csv") {
-        const csv = await this.exportSessionsToCSV(sessionMetrics, period);
+        const csv = await AdvancedAnalyticsController.exportSessionsToCSV(sessionMetrics, period);
         res.setHeader("Content-Type", "text/csv");
         res.setHeader(
           "Content-Disposition",
@@ -140,7 +140,7 @@ export const AdvancedAnalyticsController = {
 
       // Handle CSV export
       if (format === "csv") {
-        const csv = await this.exportUsersToCSV(studentMetrics, period);
+        const csv = await AdvancedAnalyticsController.exportUsersToCSV(studentMetrics, period);
         res.setHeader("Content-Type", "text/csv");
         res.setHeader(
           "Content-Disposition",
@@ -182,7 +182,7 @@ export const AdvancedAnalyticsController = {
    */
   getMetricsByDateRange: asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
     try {
-      const metricType = req.params.type;
+      const metricType = req.params.type as string;
       const startDate = new Date(req.query.startDate as string);
       const endDate = new Date(req.query.endDate as string);
       const filters = req.query.filters ? JSON.parse(req.query.filters as string) : {};
@@ -249,7 +249,7 @@ export const AdvancedAnalyticsController = {
       };
 
       // Add current timestamp
-      health.currentTime = new Date().toISOString();
+      (health as any).currentTime = new Date().toISOString();
 
       ResponseUtil.success(res, health, "Analytics health retrieved successfully");
     } catch (error) {

@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 
 export const getEventHistory = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { aggregateId } = req.params;
+    const { aggregateId } = req.params as Record<string, string>;
     const { limit = 100, offset = 0 } = req.query;
 
     const result = await EventStoreService.getEventHistory(
@@ -22,7 +22,7 @@ export const getEventHistory = async (req: Request, res: Response): Promise<void
 
 export const getAggregateState = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { aggregateId, aggregateType } = req.params;
+    const { aggregateId, aggregateType } = req.params as Record<string, string>;
     const { toVersion } = req.query;
 
     res.status(404).json({ 
@@ -37,7 +37,7 @@ export const getAggregateState = async (req: Request, res: Response): Promise<vo
 
 export const getEvents = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { aggregateId } = req.params;
+    const { aggregateId } = req.params as Record<string, string>;
     const { fromVersion = 1 } = req.query;
 
     const events = await EventStoreService.getEvents(

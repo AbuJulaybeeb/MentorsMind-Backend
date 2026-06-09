@@ -17,9 +17,13 @@ export interface SessionOutcome {
   skillsImproved: string[];
   nextSteps: string[];
   progressContribution: number; // 0-100 percentage
-  completionStatus: 'not_started' | 'in_progress' | 'completed' | 'needs_review';
+  completionStatus:
+    | "not_started"
+    | "in_progress"
+    | "completed"
+    | "needs_review";
   sessionEffectiveness: number; // 1-5 rating
-  recommendedFollowUp?: 'continue' | 'assessment' | 'support' | 'complete';
+  recommendedFollowUp?: "continue" | "assessment" | "support" | "complete";
   createdAt: string;
   updatedAt: string;
 }
@@ -32,9 +36,13 @@ export interface CreateSessionOutcomeData {
   skillsImproved?: string[];
   nextSteps?: string[];
   progressContribution?: number;
-  completionStatus?: 'not_started' | 'in_progress' | 'completed' | 'needs_review';
+  completionStatus?:
+    | "not_started"
+    | "in_progress"
+    | "completed"
+    | "needs_review";
   sessionEffectiveness?: number;
-  recommendedFollowUp?: 'continue' | 'assessment' | 'support' | 'complete';
+  recommendedFollowUp?: "continue" | "assessment" | "support" | "complete";
 }
 
 export interface SessionImpactAnalysis {
@@ -55,12 +63,12 @@ export const SessionOutcomeService = {
    */
   async createSessionOutcome(
     data: CreateSessionOutcomeData,
-    userId: string
+    userId: string,
   ): Promise<SessionOutcome> {
     // Validate booking exists and user has access
     const { rows: bookingRows } = await pool.query(
       `SELECT * FROM bookings WHERE id = $1`,
-      [data.bookingId]
+      [data.bookingId],
     );
 
     if (bookingRows.length === 0) {
@@ -75,12 +83,13 @@ export const SessionOutcomeService = {
     }
 
     // Check if booking is completed
-    if (booking.status !== 'completed') {
+    if (booking.status !== "completed") {
       throw createError("Can only create outcomes for completed sessions", 400);
     }
 
     // Get milestone mapping if exists
-    const milestoneMapping = await SessionMilestoneService.getMilestoneForSession(data.bookingId);
+    const milestoneMapping =
+      await SessionMilestoneService.getMilestoneForSession(data.bookingId);
 
     // Create session outcome record
     const { rows } = await pool.query<SessionOutcome>(
@@ -106,32 +115,39 @@ export const SessionOutcomeService = {
         JSON.stringify(data.skillsImproved || []),
         JSON.stringify(data.nextSteps || []),
         data.progressContribution || 0,
-        data.completionStatus || 'in_progress',
+        data.completionStatus || "in_progress",
         data.sessionEffectiveness || 3,
-        data.recommendedFollowUp || null
-      ]
+        data.recommendedFollowUp || null,
+      ],
     );
 
     const outcome = rows[0];
 
     // Update milestone progress if applicable
-    if (milestoneMapping && milestoneMapping.contributesToCompletion && data.progressContribution) {
+    if (
+      milestoneMapping &&
+      milestoneMapping.contributesToCompletion &&
+      data.progressContribution
+    ) {
       await this.updateMilestoneProgressFromOutcome(
         milestoneMapping.milestoneId,
         booking.mentee_id,
         data.progressContribution,
-        data.completionStatus || 'in_progress'
+        data.completionStatus || "in_progress",
       );
     }
 
     // Invalidate relevant caches
-    await this.invalidateOutcomeCaches(booking.mentee_id, milestoneMapping?.milestoneId);
+    await this.invalidateOutcomeCaches(
+      booking.mentee_id,
+      milestoneMapping?.milestoneId,
+    );
 
     logger.info("Session outcome created", {
       bookingId: data.bookingId,
       milestoneId: milestoneMapping?.milestoneId,
       progressContribution: data.progressContribution,
-      userId
+      userId,
     });
 
     return outcome;
@@ -143,7 +159,7 @@ export const SessionOutcomeService = {
   async updateSessionOutcome(
     outcomeId: string,
     updates: Partial<CreateSessionOutcomeData>,
-    userId: string
+    userId: string,
   ): Promise<SessionOutcome> {
     // Get existing outcome
     const existing = await this.getSessionOutcome(outcomeId, userId);
@@ -201,7 +217,7 @@ export const SessionOutcomeService = {
 
     const { rows } = await pool.query<SessionOutcome>(
       `UPDATE session_outcomes 
-       SET ${fields.join(', ')}
+       SET ${fields.join(", ")}
        WHERE id = $${idx}
        RETURNING 
          id, booking_id as "bookingId", milestone_id as "milestoneId",
@@ -211,7 +227,7 @@ export const SessionOutcomeService = {
          completion_status as "completionStatus", session_effectiveness as "sessionEffectiveness",
          recommended_follow_up as "recommendedFollowUp", created_at as "createdAt",
          updated_at as "updatedAt"`,
-      values
+      values,
     );
 
     const updated = rows[0];
@@ -220,15 +236,15 @@ export const SessionOutcomeService = {
     if (existing.milestoneId && updates.progressContribution !== undefined) {
       const { rows: bookingRows } = await pool.query(
         `SELECT mentee_id FROM bookings WHERE id = $1`,
-        [existing.bookingId]
+        [existing.bookingId],
       );
-      
+
       if (bookingRows.length > 0) {
         await this.updateMilestoneProgressFromOutcome(
           existing.milestoneId,
           bookingRows[0].mentee_id,
           updates.progressContribution,
-          updates.completionStatus || existing.completionStatus
+          updates.completionStatus || existing.completionStatus,
         );
       }
     }
@@ -236,17 +252,20 @@ export const SessionOutcomeService = {
     // Invalidate relevant caches
     const { rows: bookingRows } = await pool.query(
       `SELECT mentee_id FROM bookings WHERE id = $1`,
-      [existing.bookingId]
+      [existing.bookingId],
     );
-    
+
     if (bookingRows.length > 0) {
-      await this.invalidateOutcomeCaches(bookingRows[0].mentee_id, existing.milestoneId);
+      await this.invalidateOutcomeCaches(
+        bookingRows[0].mentee_id,
+        existing.milestoneId,
+      );
     }
 
     logger.info("Session outcome updated", {
       outcomeId,
       updates: Object.keys(updates),
-      userId
+      userId,
     });
 
     return updated;
@@ -257,7 +276,7 @@ export const SessionOutcomeService = {
    */
   async getSessionOutcome(
     outcomeId: string,
-    userId: string
+    userId: string,
   ): Promise<SessionOutcome | null> {
     const { rows } = await pool.query(
       `SELECT 
@@ -271,7 +290,7 @@ export const SessionOutcomeService = {
        FROM session_outcomes so
        JOIN bookings b ON so.booking_id = b.id
        WHERE so.id = $1 AND (b.mentor_id = $2 OR b.mentee_id = $2)`,
-      [outcomeId, userId]
+      [outcomeId, userId],
     );
 
     if (rows.length === 0) {
@@ -279,11 +298,11 @@ export const SessionOutcomeService = {
     }
 
     const outcome = rows[0];
-    
+
     // Parse JSON fields
-    outcome.objectivesAchieved = JSON.parse(outcome.objectivesAchieved || '[]');
-    outcome.skillsImproved = JSON.parse(outcome.skillsImproved || '[]');
-    outcome.nextSteps = JSON.parse(outcome.nextSteps || '[]');
+    outcome.objectivesAchieved = JSON.parse(outcome.objectivesAchieved || "[]");
+    outcome.skillsImproved = JSON.parse(outcome.skillsImproved || "[]");
+    outcome.nextSteps = JSON.parse(outcome.nextSteps || "[]");
 
     return outcome;
   },
@@ -293,7 +312,7 @@ export const SessionOutcomeService = {
    */
   async getSessionOutcomeByBooking(
     bookingId: string,
-    userId: string
+    userId: string,
   ): Promise<SessionOutcome | null> {
     const { rows } = await pool.query(
       `SELECT 
@@ -307,7 +326,7 @@ export const SessionOutcomeService = {
        FROM session_outcomes so
        JOIN bookings b ON so.booking_id = b.id
        WHERE so.booking_id = $1 AND (b.mentor_id = $2 OR b.mentee_id = $2)`,
-      [bookingId, userId]
+      [bookingId, userId],
     );
 
     if (rows.length === 0) {
@@ -315,11 +334,11 @@ export const SessionOutcomeService = {
     }
 
     const outcome = rows[0];
-    
+
     // Parse JSON fields
-    outcome.objectivesAchieved = JSON.parse(outcome.objectivesAchieved || '[]');
-    outcome.skillsImproved = JSON.parse(outcome.skillsImproved || '[]');
-    outcome.nextSteps = JSON.parse(outcome.nextSteps || '[]');
+    outcome.objectivesAchieved = JSON.parse(outcome.objectivesAchieved || "[]");
+    outcome.skillsImproved = JSON.parse(outcome.skillsImproved || "[]");
+    outcome.nextSteps = JSON.parse(outcome.nextSteps || "[]");
 
     return outcome;
   },
@@ -329,7 +348,7 @@ export const SessionOutcomeService = {
    */
   async getMilestoneSessionOutcomes(
     milestoneId: string,
-    userId: string
+    userId: string,
   ): Promise<SessionOutcome[]> {
     // Validate milestone access
     const { rows: accessRows } = await pool.query(
@@ -338,7 +357,7 @@ export const SessionOutcomeService = {
        JOIN learning_paths lp ON m.learning_path_id = lp.id
        LEFT JOIN path_enrollments pe ON lp.id = pe.learning_path_id AND pe.student_id = $2
        WHERE m.id = $1`,
-      [milestoneId, userId]
+      [milestoneId, userId],
     );
 
     if (accessRows.length === 0) {
@@ -362,14 +381,14 @@ export const SessionOutcomeService = {
        FROM session_outcomes so
        WHERE so.milestone_id = $1
        ORDER BY so.created_at DESC`,
-      [milestoneId]
+      [milestoneId],
     );
 
-    return rows.map(outcome => ({
+    return rows.map((outcome) => ({
       ...outcome,
-      objectivesAchieved: JSON.parse(outcome.objectivesAchieved || '[]'),
-      skillsImproved: JSON.parse(outcome.skillsImproved || '[]'),
-      nextSteps: JSON.parse(outcome.nextSteps || '[]')
+      objectivesAchieved: JSON.parse(outcome.objectivesAchieved || "[]"),
+      skillsImproved: JSON.parse(outcome.skillsImproved || "[]"),
+      nextSteps: JSON.parse(outcome.nextSteps || "[]"),
     }));
   },
 
@@ -378,7 +397,7 @@ export const SessionOutcomeService = {
    */
   async analyzeSessionImpact(
     bookingId: string,
-    userId: string
+    userId: string,
   ): Promise<SessionImpactAnalysis | null> {
     // Get session outcome
     const outcome = await this.getSessionOutcomeByBooking(bookingId, userId);
@@ -398,7 +417,7 @@ export const SessionOutcomeService = {
        LEFT JOIN milestone_progress mp ON m.id = mp.milestone_id AND mp.enrollment_id = pe.id
        JOIN bookings b ON b.mentee_id = pe.student_id
        WHERE m.id = $1 AND b.id = $2`,
-      [outcome.milestoneId, bookingId]
+      [outcome.milestoneId, bookingId],
     );
 
     if (rows.length === 0) {
@@ -415,24 +434,33 @@ export const SessionOutcomeService = {
 
     // Generate recommendations based on progress and outcomes
     const recommendedActions: string[] = [];
-    
+
     if (progressGain > 0) {
-      recommendedActions.push(`Great progress! Gained ${progressGain}% completion`);
+      recommendedActions.push(
+        `Great progress! Gained ${progressGain}% completion`,
+      );
     }
-    
-    if (outcome.recommendedFollowUp === 'assessment') {
-      recommendedActions.push("Ready for assessment - book an assessment session");
-    } else if (outcome.recommendedFollowUp === 'support') {
-      recommendedActions.push("Consider booking a support session for additional help");
-    } else if (outcome.recommendedFollowUp === 'complete') {
+
+    if (outcome.recommendedFollowUp === "assessment") {
+      recommendedActions.push(
+        "Ready for assessment - book an assessment session",
+      );
+    } else if (outcome.recommendedFollowUp === "support") {
+      recommendedActions.push(
+        "Consider booking a support session for additional help",
+      );
+    } else if (outcome.recommendedFollowUp === "complete") {
       recommendedActions.push("Milestone is ready for completion");
     }
 
     if (outcome.sessionEffectiveness < 3) {
-      recommendedActions.push("Session effectiveness was low - consider different approach");
+      recommendedActions.push(
+        "Session effectiveness was low - consider different approach",
+      );
     }
 
-    const isReadyForCompletion = currentProgress >= 90 || outcome.completionStatus === 'completed';
+    const isReadyForCompletion =
+      currentProgress >= 90 || outcome.completionStatus === "completed";
 
     return {
       milestoneId: outcome.milestoneId,
@@ -443,7 +471,7 @@ export const SessionOutcomeService = {
       objectivesCompleted,
       totalObjectives: learningObjectives.length,
       recommendedActions,
-      isReadyForCompletion
+      isReadyForCompletion,
     };
   },
 
@@ -452,7 +480,7 @@ export const SessionOutcomeService = {
    */
   async getMentorSessionAnalytics(
     mentorId: string,
-    timeframe: 'week' | 'month' | 'quarter' = 'month'
+    timeframe: "week" | "month" | "quarter" = "month",
   ): Promise<{
     totalSessions: number;
     averageEffectiveness: number;
@@ -475,7 +503,7 @@ export const SessionOutcomeService = {
        JOIN bookings b ON so.booking_id = b.id
        WHERE b.mentor_id = $1 AND so.created_at >= $2
        GROUP BY so.skills_improved, so.recommended_follow_up`,
-      [mentorId, timeCondition]
+      [mentorId, timeCondition],
     );
 
     if (rows.length === 0) {
@@ -485,7 +513,7 @@ export const SessionOutcomeService = {
         averageProgressContribution: 0,
         completionRate: 0,
         topSkillsImproved: [],
-        recommendationDistribution: {}
+        recommendationDistribution: {},
       };
     }
 
@@ -499,46 +527,52 @@ export const SessionOutcomeService = {
 
     for (const row of rows) {
       totalSessions += parseInt(row.total_sessions);
-      totalEffectiveness += parseFloat(row.avg_effectiveness) * parseInt(row.total_sessions);
-      totalProgress += parseFloat(row.avg_progress) * parseInt(row.total_sessions);
+      totalEffectiveness +=
+        parseFloat(row.avg_effectiveness) * parseInt(row.total_sessions);
+      totalProgress +=
+        parseFloat(row.avg_progress) * parseInt(row.total_sessions);
       completedSessions += parseInt(row.completed_sessions);
 
       // Count skills
-      const skills = JSON.parse(row.skills_improved || '[]');
+      const skills = JSON.parse(row.skills_improved || "[]");
       for (const skill of skills) {
         skillCounts[skill] = (skillCounts[skill] || 0) + 1;
       }
 
       // Count recommendations
       if (row.recommended_follow_up) {
-        recommendationCounts[row.recommended_follow_up] = 
-          (recommendationCounts[row.recommended_follow_up] || 0) + parseInt(row.total_sessions);
+        recommendationCounts[row.recommended_follow_up] =
+          (recommendationCounts[row.recommended_follow_up] || 0) +
+          parseInt(row.total_sessions);
       }
     }
 
     // Sort skills by count
     const topSkillsImproved = Object.entries(skillCounts)
-      .sort(([,a], [,b]) => b - a)
+      .sort(([, a], [, b]) => b - a)
       .slice(0, 10)
       .map(([skill, count]) => ({ skill, count }));
 
     return {
       totalSessions,
-      averageEffectiveness: totalSessions > 0 ? totalEffectiveness / totalSessions : 0,
-      averageProgressContribution: totalSessions > 0 ? totalProgress / totalSessions : 0,
-      completionRate: totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0,
+      averageEffectiveness:
+        totalSessions > 0 ? totalEffectiveness / totalSessions : 0,
+      averageProgressContribution:
+        totalSessions > 0 ? totalProgress / totalSessions : 0,
+      completionRate:
+        totalSessions > 0 ? (completedSessions / totalSessions) * 100 : 0,
       topSkillsImproved,
-      recommendationDistribution: recommendationCounts
+      recommendationDistribution: recommendationCounts,
     };
   },
 
   // Private helper methods
 
-  private async updateMilestoneProgressFromOutcome(
+  async updateMilestoneProgressFromOutcome(
     milestoneId: string,
     studentId: string,
     progressContribution: number,
-    completionStatus: string
+    completionStatus: string,
   ): Promise<void> {
     try {
       // Get enrollment ID
@@ -548,68 +582,85 @@ export const SessionOutcomeService = {
          JOIN learning_paths lp ON pe.learning_path_id = lp.id
          JOIN milestones m ON m.learning_path_id = lp.id
          WHERE m.id = $1 AND pe.student_id = $2`,
-        [milestoneId, studentId]
+        [milestoneId, studentId],
       );
 
       if (enrollmentRows.length === 0) {
-        logger.warn("No enrollment found for milestone progress update", { milestoneId, studentId });
+        logger.warn("No enrollment found for milestone progress update", {
+          milestoneId,
+          studentId,
+        });
         return;
       }
 
       const enrollmentId = enrollmentRows[0].enrollment_id;
 
       // Update progress using existing service
-      await ProgressTrackingService.updateProgress(enrollmentId, milestoneId, progressContribution);
+      await ProgressTrackingService.updateProgress(
+        enrollmentId,
+        milestoneId,
+        progressContribution,
+      );
 
       // If completion status indicates completion, try to complete milestone
-      if (completionStatus === 'completed') {
+      if (completionStatus === "completed") {
         try {
-          await MilestoneCompletionService.completeMilestone(enrollmentId, milestoneId, {
-            completionData: { source: 'session_outcome' },
-            notes: 'Completed via session outcome'
-          });
+          await MilestoneCompletionService.completeMilestone(
+            enrollmentId,
+            milestoneId,
+            {
+              completionData: { source: "session_outcome" },
+              notes: "Completed via session outcome",
+            },
+          );
         } catch (error) {
-          logger.warn("Could not auto-complete milestone from session outcome", { 
-            milestoneId, 
-            studentId, 
-            error 
-          });
+          logger.warn(
+            "Could not auto-complete milestone from session outcome",
+            {
+              milestoneId,
+              studentId,
+              error,
+            },
+          );
         }
       }
     } catch (error) {
-      logger.error("Error updating milestone progress from outcome", { 
-        milestoneId, 
-        studentId, 
-        progressContribution, 
-        error 
+      logger.error("Error updating milestone progress from outcome", {
+        milestoneId,
+        studentId,
+        progressContribution,
+        error,
       });
     }
   },
 
-  private async invalidateOutcomeCaches(studentId: string, milestoneId?: string): Promise<void> {
+  async invalidateOutcomeCaches(
+    studentId: string,
+    milestoneId?: string,
+  ): Promise<void> {
     const cacheKeys = [
       CacheKeys.studentProgress(studentId),
-      CacheKeys.sessionList(studentId)
+      CacheKeys.sessionList(studentId),
     ];
 
     if (milestoneId) {
       cacheKeys.push(CacheKeys.milestoneProgress(milestoneId));
     }
 
-    await Promise.all(cacheKeys.map(key => CacheService.del(key)));
+    await Promise.all(cacheKeys.map((key) => CacheService.del(key)));
   },
 
-  private getTimeCondition(timeframe: 'week' | 'month' | 'quarter'): Date {
+  getTimeCondition(timeframe: "week" | "month" | "quarter"): Date {
     const now = new Date();
     switch (timeframe) {
-      case 'week':
+      case "week":
         return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      case 'month':
+      case "month":
         return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      case 'quarter':
+      case "quarter":
         return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
       default:
         return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     }
-  }
+  },
 };

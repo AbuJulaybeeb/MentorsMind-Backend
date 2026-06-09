@@ -4,7 +4,6 @@ import { CacheKeys, CacheTTL } from "../utils/cache-key.utils";
 import { logger } from "../utils/logger.utils";
 import { createError } from "../middleware/errorHandler";
 import { BookingRecord } from "../models/booking.model";
-import { MilestoneProgress } from "../models/milestone.model";
 
 export interface SessionMilestoneMapping {
   id: string;
@@ -393,7 +392,7 @@ export const SessionMilestoneService = {
 
   // Private helper methods
 
-  private async getMappingByBookingId(bookingId: string): Promise<SessionMilestoneMapping | null> {
+  async getMappingByBookingId(bookingId: string): Promise<SessionMilestoneMapping | null> {
     const { rows } = await pool.query<SessionMilestoneMapping>(
       `SELECT 
          id,
@@ -410,7 +409,7 @@ export const SessionMilestoneService = {
     return rows[0] || null;
   },
 
-  private async validateMilestoneAccess(milestoneId: string, userId: string): Promise<any> {
+  async validateMilestoneAccess(milestoneId: string, userId: string): Promise<any> {
     const { rows } = await pool.query(
       `SELECT m.*, lp.mentor_id, pe.student_id
        FROM milestones m
@@ -434,7 +433,7 @@ export const SessionMilestoneService = {
     return milestone;
   },
 
-  private async validateBookingAccess(bookingId: string, userId: string): Promise<BookingRecord> {
+  async validateBookingAccess(bookingId: string, userId: string): Promise<BookingRecord> {
     const { rows } = await pool.query<BookingRecord>(
       `SELECT * FROM bookings WHERE id = $1`,
       [bookingId]
@@ -454,7 +453,7 @@ export const SessionMilestoneService = {
     return booking;
   },
 
-  private async validatePrerequisites(milestoneId: string, userId: string): Promise<boolean> {
+  async validatePrerequisites(milestoneId: string, userId: string): Promise<boolean> {
     // Import here to avoid circular dependency
     const { PrerequisiteValidatorService } = await import("./prerequisite-validator.service");
     
@@ -467,7 +466,7 @@ export const SessionMilestoneService = {
     }
   },
 
-  private async invalidateSessionCaches(milestoneId: string, userId: string): Promise<void> {
+  async invalidateSessionCaches(milestoneId: string, userId: string): Promise<void> {
     const cacheKeys = [
       CacheKeys.milestoneProgress(milestoneId),
       CacheKeys.studentProgress(userId),

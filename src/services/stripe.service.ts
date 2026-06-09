@@ -50,7 +50,7 @@ export class StripeServiceClass {
         const pi = (event.type === 'payment_intent.succeeded') ? event.data.object as Stripe.PaymentIntent : undefined;
         const ch = (event.type === 'charge.succeeded') ? event.data.object as Stripe.Charge : undefined;
 
-        const charge = ch ?? (pi?.charges?.data && pi.charges.data[0]) ?? null;
+        const charge = ch ?? ((pi as any)?.charges?.data && (pi as any).charges.data[0]) ?? null;
         if (!charge) {
           logger.warn('Stripe event has no charge', { eventId: event.id });
           return;

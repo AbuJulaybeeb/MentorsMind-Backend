@@ -75,7 +75,7 @@ router.get(
 // POST /api/v1/referrals/affiliate/:userId/approve
 router.post(
   "/affiliate/:userId/approve",
-  authorize(["admin"]),
+  authorize("admin"),
   ReferralController.approveAffiliateProfile,
 );
 
@@ -95,7 +95,7 @@ router.get("/tiers", ReferralController.getRewardTiers);
 // POST /api/v1/referrals/affiliate/:userId/payout
 router.post(
   "/affiliate/:userId/payout",
-  authorize(["admin"]),
+  authorize("admin"),
   ReferralController.requestPayout,
 );
 

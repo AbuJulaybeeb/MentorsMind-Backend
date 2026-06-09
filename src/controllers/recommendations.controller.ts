@@ -45,7 +45,7 @@ export const RecommendationsController = {
    */
   async trackClick(req: AuthenticatedRequest, res: Response): Promise<void> {
     const learnerId = req.user!.userId;
-    const { mentorId } = req.params;
+    const { mentorId } = req.params as Record<string, string>;
 
     await RecommendationService.trackEvent(learnerId, mentorId, "click");
 

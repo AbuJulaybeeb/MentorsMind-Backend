@@ -76,7 +76,7 @@ class VideoRecordingService {
   ): Promise<RecordingStream> {
     try {
       // Import AWS SDK dynamically to avoid loading if not used
-      const { IVSClient, StartChannelCommand } = await import('@aws-sdk/client-ivs');
+      const { IVSClient, StartChannelCommand } = await import('@aws-sdk/client-ivs') as any;
 
       const client = new IVSClient({
         region: recordingConfig.ivs.region,
@@ -106,7 +106,7 @@ class VideoRecordingService {
    */
   private async stopIVSRecording(sessionId: string, recordingId: string): Promise<void> {
     try {
-      const { IVSClient, StopStreamCommand } = await import('@aws-sdk/client-ivs');
+      const { IVSClient, StopStreamCommand } = await import('@aws-sdk/client-ivs') as any;
 
       const client = new IVSClient({
         region: recordingConfig.ivs.region,

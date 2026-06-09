@@ -19,7 +19,7 @@ export const ProgressController = {
    */
   async getEnrollmentDetails(req: Request, res: Response): Promise<void> {
     try {
-      const { enrollmentId } = req.params;
+      const { enrollmentId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -62,7 +62,7 @@ export const ProgressController = {
    */
   async updateEnrollmentStatus(req: Request, res: Response): Promise<void> {
     try {
-      const { enrollmentId } = req.params;
+      const { enrollmentId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -113,7 +113,7 @@ export const ProgressController = {
         res.status(400).json({
           success: false,
           message: "Validation error",
-          errors: error.errors
+          errors: (error as any).errors
         });
         return;
       }
@@ -128,7 +128,7 @@ export const ProgressController = {
    */
   async completeMilestone(req: Request, res: Response): Promise<void> {
     try {
-      const { enrollmentId, milestoneId } = req.params;
+      const { enrollmentId, milestoneId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -183,7 +183,7 @@ export const ProgressController = {
         res.status(400).json({
           success: false,
           message: "Validation error",
-          errors: error.errors
+          errors: (error as any).errors
         });
         return;
       }
@@ -198,7 +198,7 @@ export const ProgressController = {
    */
   async getProgress(req: Request, res: Response): Promise<void> {
     try {
-      const { enrollmentId } = req.params;
+      const { enrollmentId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -245,7 +245,7 @@ export const ProgressController = {
    */
   async updateMilestoneProgress(req: Request, res: Response): Promise<void> {
     try {
-      const { enrollmentId, milestoneId } = req.params;
+      const { enrollmentId, milestoneId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -308,7 +308,7 @@ export const ProgressController = {
    */
   async getPathAnalytics(req: Request, res: Response): Promise<void> {
     try {
-      const { pathId } = req.params;
+      const { pathId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {

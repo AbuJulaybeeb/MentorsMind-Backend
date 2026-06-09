@@ -14,3 +14,6 @@ export {
   JobRateLimit,
 } from "../config/queue";
 export type { QueueName } from "../config/queue";
+
+// Backward-compat alias used by some workers
+export { redisConnection as queueConnection } from "../config/queue";

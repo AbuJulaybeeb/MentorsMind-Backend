@@ -68,7 +68,7 @@ export const LearningPathController = {
         res.status(400).json({
           success: false,
           message: "Validation error",
-          errors: error.errors
+          errors: (error as any).errors
         });
         return;
       }
@@ -83,7 +83,7 @@ export const LearningPathController = {
    */
   async getPath(req: Request, res: Response): Promise<void> {
     try {
-      const { pathId } = req.params;
+      const { pathId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!pathId) {
@@ -121,7 +121,7 @@ export const LearningPathController = {
    */
   async updatePath(req: Request, res: Response): Promise<void> {
     try {
-      const { pathId } = req.params;
+      const { pathId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -158,7 +158,7 @@ export const LearningPathController = {
         res.status(400).json({
           success: false,
           message: "Validation error",
-          errors: error.errors
+          errors: (error as any).errors
         });
         return;
       }
@@ -173,7 +173,7 @@ export const LearningPathController = {
    */
   async deletePath(req: Request, res: Response): Promise<void> {
     try {
-      const { pathId } = req.params;
+      const { pathId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -259,7 +259,7 @@ export const LearningPathController = {
         res.status(400).json({
           success: false,
           message: "Invalid query parameters",
-          errors: error.errors
+          errors: (error as any).errors
         });
         return;
       }
@@ -274,7 +274,7 @@ export const LearningPathController = {
    */
   async publishPath(req: Request, res: Response): Promise<void> {
     try {
-      const { pathId } = req.params;
+      const { pathId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -313,7 +313,7 @@ export const LearningPathController = {
    */
   async unpublishPath(req: Request, res: Response): Promise<void> {
     try {
-      const { pathId } = req.params;
+      const { pathId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -352,7 +352,7 @@ export const LearningPathController = {
    */
   async clonePath(req: Request, res: Response): Promise<void> {
     try {
-      const { pathId } = req.params;
+      const { pathId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -415,7 +415,7 @@ export const LearningPathController = {
    */
   async enrollInPath(req: Request, res: Response): Promise<void> {
     try {
-      const { pathId } = req.params;
+      const { pathId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -452,7 +452,7 @@ export const LearningPathController = {
         res.status(400).json({
           success: false,
           message: "Validation error",
-          errors: error.errors
+          errors: (error as any).errors
         });
         return;
       }
@@ -467,7 +467,7 @@ export const LearningPathController = {
    */
   async unenrollFromPath(req: Request, res: Response): Promise<void> {
     try {
-      const { pathId } = req.params;
+      const { pathId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -505,7 +505,7 @@ export const LearningPathController = {
    */
   async getPathEnrollments(req: Request, res: Response): Promise<void> {
     try {
-      const { pathId } = req.params;
+      const { pathId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -545,7 +545,7 @@ export const LearningPathController = {
         res.status(400).json({
           success: false,
           message: "Invalid query parameters",
-          errors: error.errors
+          errors: (error as any).errors
         });
         return;
       }
@@ -588,7 +588,7 @@ export const LearningPathController = {
         res.status(400).json({
           success: false,
           message: "Invalid query parameters",
-          errors: error.errors
+          errors: (error as any).errors
         });
         return;
       }

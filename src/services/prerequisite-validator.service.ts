@@ -307,7 +307,7 @@ export const PrerequisiteValidatorService = {
 
   // Private helper methods
 
-  private async getMilestonePrerequisites(milestoneId: string): Promise<Prerequisite[]> {
+  async getMilestonePrerequisites(milestoneId: string): Promise<Prerequisite[]> {
     const { rows } = await pool.query<Prerequisite>(
       `SELECT 
          id, milestone_id as "milestoneId", prerequisite_type as "prerequisiteType",
@@ -323,7 +323,7 @@ export const PrerequisiteValidatorService = {
     return rows;
   },
 
-  private async checkSinglePrerequisite(
+  async checkSinglePrerequisite(
     studentId: string,
     prerequisite: Prerequisite
   ): Promise<PrerequisiteStatus> {
@@ -386,7 +386,7 @@ export const PrerequisiteValidatorService = {
     };
   },
 
-  private async checkMilestoneCompletion(
+  async checkMilestoneCompletion(
     studentId: string,
     milestoneId: string
   ): Promise<boolean> {
@@ -401,7 +401,7 @@ export const PrerequisiteValidatorService = {
     return rows.length > 0 && rows[0].status === 'completed';
   },
 
-  private async getPrerequisiteOverride(
+  async getPrerequisiteOverride(
     studentId: string,
     milestoneId: string,
     prerequisiteId: string
@@ -419,7 +419,7 @@ export const PrerequisiteValidatorService = {
     return rows[0] || null;
   },
 
-  private async invalidatePrerequisiteCache(studentId: string, milestoneId: string): Promise<void> {
+  async invalidatePrerequisiteCache(studentId: string, milestoneId: string): Promise<void> {
     const cacheKey = CacheKeys.prerequisiteValidation(studentId, milestoneId);
     await CacheService.del(cacheKey);
     

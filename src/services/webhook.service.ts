@@ -357,7 +357,7 @@ export const WebhookService = {
   ): Promise<void> {
     try {
       const startTime = Date.now();
-      const signature = this.generateSignature(payload as WebhookEvent, secret);
+      const signature = this.generateSignature(payload as any, secret);
 
       const response = await axios.post(url, payload, {
         headers: {

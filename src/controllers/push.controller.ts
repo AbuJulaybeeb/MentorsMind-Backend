@@ -158,7 +158,7 @@ export const PushController = {
     const schema = z.object({
       title: z.string().min(1),
       body: z.string().min(1),
-      data: z.record(z.string()).optional(),
+      data: z.record(z.string(), z.string()).optional(),
       imageUrl: z.string().url().optional(),
       deepLink: z.string().optional(),
       priority: z.enum(["high", "normal"]).optional(),

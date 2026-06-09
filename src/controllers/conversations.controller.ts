@@ -52,7 +52,7 @@ export const ConversationsController = {
    */
   async getMessages(req: AuthenticatedRequest, res: Response): Promise<void> {
     const userId = req.user!.id;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const limit = Math.min(100, parseInt(req.query.limit as string) || 50);
     const cursor = req.query.cursor as string | undefined;
 
@@ -75,7 +75,7 @@ export const ConversationsController = {
    */
   async sendMessage(req: AuthenticatedRequest, res: Response): Promise<void> {
     const userId = req.user!.id;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const { body } = req.body;
 
     if (!body || !String(body).trim()) {
@@ -99,7 +99,7 @@ export const ConversationsController = {
    */
   async deleteMessage(req: AuthenticatedRequest, res: Response): Promise<void> {
     const userId = req.user!.id;
-    const { id, msgId } = req.params;
+    const { id, msgId } = req.params as Record<string, string>;
 
     const deleted = await MessagingService.deleteMessage(id, msgId, userId);
 
@@ -119,7 +119,7 @@ export const ConversationsController = {
    */
   async markRead(req: AuthenticatedRequest, res: Response): Promise<void> {
     const userId = req.user!.id;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
 
     const conv = await MessagingService.getConversation(id, userId);
     if (!conv) {
@@ -137,7 +137,7 @@ export const ConversationsController = {
    */
   async uploadAttachment(req: AuthenticatedRequest, res: Response): Promise<void> {
     const userId = req.user!.id;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
 
     const file = (req as any).file;
     if (!file) {

@@ -369,7 +369,7 @@ export const OfflineController = {
    */
   async resolveConflict(req: Request, res: Response): Promise<void> {
     const userId = getUserId(req);
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const { strategy, mergedPayload } = req.body;
 
     const validStrategies = ['client_wins', 'server_wins', 'merge'];

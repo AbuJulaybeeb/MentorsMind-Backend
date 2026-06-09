@@ -683,7 +683,7 @@ export const PathTemplateService = {
 
   // Private helper methods
 
-  private async getTemplateMilestones(templateId: string): Promise<TemplateMillestone[]> {
+  async getTemplateMilestones(templateId: string): Promise<TemplateMillestone[]> {
     const { rows } = await pool.query(
       `SELECT 
          title, description, order_index as "orderIndex", estimated_duration_hours as "estimatedDurationHours",
@@ -703,7 +703,7 @@ export const PathTemplateService = {
     }));
   },
 
-  private getCategoryDescription(category: string): string {
+  getCategoryDescription(category: string): string {
     const descriptions: Record<string, string> = {
       'Programming': 'Software development and programming languages',
       'Data Science': 'Data analysis, machine learning, and statistics',
@@ -716,7 +716,7 @@ export const PathTemplateService = {
     return descriptions[category] || 'Various learning topics and skills';
   },
 
-  private getDifficultyLevelFacets(templates: PathTemplate[]): Array<{ level: string; count: number }> {
+  getDifficultyLevelFacets(templates: PathTemplate[]): Array<{ level: string; count: number }> {
     const counts: Record<string, number> = {};
     
     templates.forEach(template => {
@@ -726,7 +726,7 @@ export const PathTemplateService = {
     return Object.entries(counts).map(([level, count]) => ({ level, count }));
   },
 
-  private getDurationRangeFacets(templates: PathTemplate[]): Array<{ range: string; count: number }> {
+  getDurationRangeFacets(templates: PathTemplate[]): Array<{ range: string; count: number }> {
     const ranges = [
       { range: '0-10 hours', min: 0, max: 10 },
       { range: '10-25 hours', min: 10, max: 25 },
@@ -740,7 +740,7 @@ export const PathTemplateService = {
     }));
   },
 
-  private getRatingRangeFacets(templates: PathTemplate[]): Array<{ range: string; count: number }> {
+  getRatingRangeFacets(templates: PathTemplate[]): Array<{ range: string; count: number }> {
     const ranges = [
       { range: '4.5+', min: 4.5 },
       { range: '4.0+', min: 4.0 },
@@ -754,7 +754,7 @@ export const PathTemplateService = {
     }));
   },
 
-  private async invalidateTemplateCache(): Promise<void> {
+  async invalidateTemplateCache(): Promise<void> {
     // Invalidate all template-related caches
     const keys = [
       CacheKeys.pathTemplates(),

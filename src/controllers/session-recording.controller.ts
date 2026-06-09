@@ -11,14 +11,6 @@ interface AuthenticatedRequest extends Request {
     userId: string;
     role: string;
   };
-  params: any;
-  body: any;
-  query: any;
-  ip?: string;
-  connection?: {
-    remoteAddress?: string;
-  };
-  get(header: string): string | undefined;
 }
 
 export const SessionRecordingController = {
@@ -33,7 +25,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { sessionId } = req.params;
+      const { sessionId } = req.params as Record<string, string>;
       const { format } = req.body as { format?: string };
 
       // TODO: Verify user is part of the session (mentor or mentee)
@@ -70,7 +62,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
       
       // This endpoint would typically handle multipart/form-data uploads
       // For now, we'll assume the file is passed as a buffer in the body
@@ -100,7 +92,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
       const { fileSize, durationSeconds, metadata } = req.body as {
         fileSize: number;
         durationSeconds: number;
@@ -138,10 +130,10 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
       const { consent } = req.body as { consent: boolean };
 
-      const ipAddress = req.ip || req.connection.remoteAddress;
+      const ipAddress = req.ip || req.connection?.remoteAddress;
       const userAgent = req.get('user-agent');
 
       await SessionRecordingService.updateConsent(
@@ -176,7 +168,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
       const { expiresIn } = req.query as { expiresIn?: string };
 
       const result = await SessionRecordingService.generatePlaybackUrl(
@@ -208,7 +200,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
 
       const recording = await SessionRecordingService.getRecording(recordingId, userId);
 
@@ -262,7 +254,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
 
       await SessionRecordingService.deleteRecording(recordingId, userId);
 
@@ -290,7 +282,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
       const { language = 'en' } = req.body as { language?: string };
 
       const transcriptionId = await recordingTranscriptionService.startTranscription({
@@ -322,7 +314,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
 
       const transcriptions = await recordingTranscriptionService.getTranscriptionsByRecording(recordingId);
 
@@ -403,7 +395,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
       const { type, timestampSeconds, title, note, color, durationSeconds, isPrivate } = req.body as {
         type?: 'bookmark' | 'annotation' | 'highlight';
         timestampSeconds: number;
@@ -450,7 +442,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
 
       const bookmarks = await recordingBookmarkService.getBookmarksByRecording(recordingId, userId);
 
@@ -504,7 +496,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { bookmarkId } = req.params;
+      const { bookmarkId } = req.params as Record<string, string>;
       const updates = req.body as {
         title?: string;
         note?: string;
@@ -538,7 +530,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { bookmarkId } = req.params;
+      const { bookmarkId } = req.params as Record<string, string>;
 
       await recordingBookmarkService.deleteBookmark(bookmarkId, userId);
 
@@ -566,7 +558,7 @@ export const SessionRecordingController = {
         return res.status(401).json({ success: false, error: 'Unauthorized' });
       }
 
-      const { recordingId } = req.params;
+      const { recordingId } = req.params as Record<string, string>;
 
       const exportData = await recordingBookmarkService.exportBookmarks(recordingId, userId);
 

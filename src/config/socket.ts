@@ -24,7 +24,7 @@ const HEARTBEAT_INTERVAL_MS = 20_000;
 // ─── Module-level singletons ──────────────────────────────────────────────────
 
 let io: SocketIOServer;
-const presenceService = new PresenceService(redis);
+const presenceService = new PresenceService(redis as Redis);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

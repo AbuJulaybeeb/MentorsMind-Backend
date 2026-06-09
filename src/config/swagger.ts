@@ -63,24 +63,6 @@ Use the **Authorize** button (🔒) above to set your token for all requests.
             timestamp: { type: 'string', format: 'date-time' },
           },
         },
-        ErrorResponse: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', example: 'error' },
-            message: { type: 'string' },
-            error: { type: 'string' },
-            timestamp: { type: 'string', format: 'date-time' },
-          },
-        },
-        PaginationMeta: {
-          type: 'object',
-          properties: {
-            page: { type: 'integer' },
-            limit: { type: 'integer' },
-            total: { type: 'integer' },
-            hasMore: { type: 'boolean' },
-          },
-        },
         ...commonSchemas,
         ...authSchemas,
         ...userSchemas,

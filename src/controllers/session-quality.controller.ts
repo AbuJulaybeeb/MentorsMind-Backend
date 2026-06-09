@@ -11,7 +11,7 @@ export const SessionQualityController = {
    */
   getSessionScore: asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const { sessionId } = req.params;
+      const { sessionId } = req.params as Record<string, string>;
 
       const score = await SessionQualityService.computeSessionScore(sessionId);
       if (!score) {
@@ -32,7 +32,7 @@ export const SessionQualityController = {
    */
   getMentorTrend: asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const { mentorId } = req.params;
+      const { mentorId } = req.params as Record<string, string>;
       const days = parseInt(req.query.days as string) || 90;
 
       const trend = await SessionQualityService.getMentorQualityTrend(
@@ -49,7 +49,7 @@ export const SessionQualityController = {
    */
   getMentorInsights: asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const { mentorId } = req.params;
+      const { mentorId } = req.params as Record<string, string>;
 
       const insights =
         await SessionQualityService.getMentorInsights(mentorId);
@@ -63,7 +63,7 @@ export const SessionQualityController = {
    */
   getTopSessions: asyncHandler(
     async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-      const { mentorId } = req.params;
+      const { mentorId } = req.params as Record<string, string>;
       const limit = parseInt(req.query.limit as string) || 5;
 
       const sessions = await SessionQualityService.getTopSessions(

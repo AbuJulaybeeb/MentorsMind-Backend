@@ -56,7 +56,7 @@ export const ComplianceController = {
     }
 
     try {
-      const request = await ComplianceService.getDSARById(req.params.id);
+      const request = await ComplianceService.getDSARById(req.params.id as string);
       if (!request) {
         ResponseUtil.notFound(res, "DSAR not found");
         return;
@@ -77,7 +77,7 @@ export const ComplianceController = {
     const { data } = req.body;
     try {
       const request = await ComplianceService.completeDSAR(
-        req.params.id,
+        req.params.id as string,
         data || {},
         req.user?.id || null,
         ComplianceService.getRequestIp(req),

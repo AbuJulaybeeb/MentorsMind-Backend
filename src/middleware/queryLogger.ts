@@ -8,7 +8,7 @@ let totalQueries = 0;
 let slowQueries = 0;
 
 export async function trackAndLogQuery(
-  client: Client,
+  client: any,
   sql: string,
   params: any[]
 ): Promise<any> {

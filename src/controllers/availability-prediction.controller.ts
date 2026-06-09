@@ -3,7 +3,7 @@ import { AvailabilityPredictionService } from "../services/availability-predicti
 
 export class AvailabilityPredictionController {
   static async getPredictions(req: Request, res: Response): Promise<void> {
-    const { mentorId } = req.params;
+    const { mentorId } = req.params as Record<string, string>;
     const daysAhead = parseInt(req.query.daysAhead as string) || 14;
     const prediction = await AvailabilityPredictionService.predictAvailability(
       mentorId,
@@ -13,14 +13,14 @@ export class AvailabilityPredictionController {
   }
 
   static async getDemandForecast(req: Request, res: Response): Promise<void> {
-    const { mentorId } = req.params;
+    const { mentorId } = req.params as Record<string, string>;
     const forecast =
       await AvailabilityPredictionService.getDemandForecast(mentorId);
     res.json({ success: true, data: forecast });
   }
 
   static async addToWaitlist(req: Request, res: Response): Promise<void> {
-    const { mentorId } = req.params;
+    const { mentorId } = req.params as Record<string, string>;
     const { userId, preferredSlot } = req.body;
     const entry = await AvailabilityPredictionService.addToWaitlist(
       mentorId,
@@ -31,7 +31,7 @@ export class AvailabilityPredictionController {
   }
 
   static async getWaitlist(req: Request, res: Response): Promise<void> {
-    const { mentorId } = req.params;
+    const { mentorId } = req.params as Record<string, string>;
     const waitlist = await AvailabilityPredictionService.getWaitlist(mentorId);
     res.json({ success: true, data: waitlist });
   }

@@ -23,7 +23,7 @@ export const BackupController = {
 
   /** GET /admin/backup/jobs/:id */
   getJob: asyncHandler(async (req: Request, res: Response) => {
-    const job = BackupService.getJob(req.params.id);
+    const job = BackupService.getJob(req.params.id as string);
     if (!job) {
       res.status(404).json({ success: false, message: "Backup job not found" });
       return;
@@ -33,7 +33,7 @@ export const BackupController = {
 
   /** POST /admin/backup/jobs/:id/verify */
   verifyBackup: asyncHandler(async (req: Request, res: Response) => {
-    const result = await BackupService.verifyBackup(req.params.id);
+    const result = await BackupService.verifyBackup(req.params.id as string);
     res.json({ success: true, data: result });
   }),
 

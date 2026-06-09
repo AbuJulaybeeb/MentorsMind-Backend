@@ -5,6 +5,7 @@ export interface ExportJob {
   user_id: string;
   status: "pending" | "processing" | "completed" | "failed";
   storage_key: string | null;
+  file_path?: string | null; // Alias for storage_key used by download endpoint
   error_message: string | null;
   expires_at: Date | null;
   metadata?: Record<string, any>;

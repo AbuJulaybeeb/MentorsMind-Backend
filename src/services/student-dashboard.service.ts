@@ -4,7 +4,11 @@ import { ProgressTrackingService } from "./progress-tracking.service";
 import { CacheService } from "./cache.service";
 import { CacheTTL } from "../utils/cache-key.utils";
 import { logger } from "../utils/logger.utils";
-import { Achievement, PathEnrollment } from "../models/learning-path.model";
+import {
+  Achievement,
+  PathEnrollment,
+  Milestone,
+} from "../models/learning-path.model";
 import pool, { db } from "../config/database";
 
 export interface StudentDashboardData {
@@ -323,7 +327,7 @@ export const StudentDashboardService = {
         [studentId, limit],
       );
 
-      milestoneCompletions.forEach((row) => {
+      milestoneCompletions.forEach((row: any) => {
         activities.push({
           id: `milestone_${row.id}`,
           type: "milestone_completed",
@@ -353,7 +357,7 @@ export const StudentDashboardService = {
         [studentId, limit],
       );
 
-      recentEnrollments.forEach((row) => {
+      recentEnrollments.forEach((row: any) => {
         activities.push({
           id: `enrollment_${row.id}`,
           type: "path_enrolled",

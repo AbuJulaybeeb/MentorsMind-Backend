@@ -129,7 +129,7 @@ class ErrorTracker {
 
     // Sanitize breadcrumbs
     if (event.breadcrumbs) {
-      event.breadcrumbs = event.breadcrumbs.map((breadcrumb) => ({
+      event.breadcrumbs = event.breadcrumbs.map((breadcrumb: any) => ({
         ...breadcrumb,
         data: this.sanitizeObject(breadcrumb.data || {}),
       }));
@@ -142,7 +142,7 @@ class ErrorTracker {
 
     // Sanitize exception values
     if (event.exception?.values) {
-      event.exception.values = event.exception.values.map((exception) => ({
+      event.exception.values = event.exception.values.map((exception: any) => ({
         ...exception,
         value: this.sanitizeString(exception.value || ""),
       }));

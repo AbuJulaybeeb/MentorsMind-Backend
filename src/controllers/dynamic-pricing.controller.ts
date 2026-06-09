@@ -64,7 +64,7 @@ export const DynamicPricingController = {
 
   updateExperimentStatus: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const { id } = req.params as Record<string, string>;
     const { status } = req.body;
 
     const validStatuses = ['draft', 'running', 'paused', 'completed', 'cancelled'];

@@ -9,7 +9,7 @@ export const DeepLinkController = {
    * Handles redirection for deep links.
    */
   async handleRedirection(req: Request, res: Response): Promise<void> {
-    const { type, id } = req.params;
+    const { type, id } = req.params as Record<string, string>;
     const userAgent = req.headers["user-agent"];
     const ipAddress = extractClientIp(req);
 

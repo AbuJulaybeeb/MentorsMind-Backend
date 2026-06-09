@@ -500,7 +500,7 @@ export const ReferralService = {
   },
 
   // Helper methods
-  private transformReferralCode(row: any): ReferralCode {
+  transformReferralCode(row: any): ReferralCode {
     return {
       id: row.id,
       userId: row.user_id,
@@ -516,7 +516,7 @@ export const ReferralService = {
     };
   },
 
-  private transformReferral(row: any): Referral {
+  transformReferral(row: any): Referral {
     return {
       id: row.id,
       referrerId: row.referrer_id,

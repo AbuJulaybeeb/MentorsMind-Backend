@@ -74,7 +74,7 @@ export const CertificationController = {
    */
   async getMentorCertifications(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { mentorId } = req.params;
+      const { mentorId } = req.params as Record<string, string>;
       const { includeExpired = 'false' } = req.query;
 
       // Authorization: mentors can view their own, admins can view all
@@ -106,7 +106,7 @@ export const CertificationController = {
    */
   async getCertificationSummary(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { mentorId } = req.params;
+      const { mentorId } = req.params as Record<string, string>;
 
       const summary = await CertificationService.getMentorCertificationSummary(mentorId);
 
@@ -129,7 +129,7 @@ export const CertificationController = {
    */
   async updateCertification(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { certificationId } = req.params;
+      const { certificationId } = req.params as Record<string, string>;
       const { status, score, metadata, notes, revocationReason } = req.body;
       const updatedBy = req.user?.id;
 
@@ -182,7 +182,7 @@ export const CertificationController = {
    */
   async startSkillTest(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { testId } = req.params;
+      const { testId } = req.params as Record<string, string>;
       const { certificationId } = req.body;
       const mentorId = req.user?.id;
 
@@ -221,7 +221,7 @@ export const CertificationController = {
    */
   async submitTestAnswers(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { attemptId } = req.params;
+      const { attemptId } = req.params as Record<string, string>;
       const { answers } = req.body;
 
       if (!answers) {
@@ -288,7 +288,7 @@ export const CertificationController = {
    */
   async getBackgroundCheck(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { checkId } = req.params;
+      const { checkId } = req.params as Record<string, string>;
 
       const check = await BackgroundCheckService.getBackgroundCheck(checkId);
 
@@ -320,7 +320,7 @@ export const CertificationController = {
    */
   async getOnboardingProgress(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { mentorId } = req.params;
+      const { mentorId } = req.params as Record<string, string>;
 
       // Authorization: mentors can view their own, admins can view all
       if (req.user?.role !== 'admin' && req.user?.id !== mentorId) {
@@ -360,7 +360,7 @@ export const CertificationController = {
    */
   async completeOnboardingStep(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { mentorId, stepId } = req.params;
+      const { mentorId, stepId } = req.params as Record<string, string>;
 
       // Authorization: mentors can complete their own steps
       if (req.user?.id !== mentorId) {
@@ -377,6 +377,38 @@ export const CertificationController = {
       logger.error("Failed to complete onboarding step", {
         mentorId: req.params.mentorId,
         stepId: req.params.stepId,
+        error: error instanceof Error ? error.message : error
+      });
+      next(error);
+    }
+  },
+
+  /**
+   * Verify certification (admin only)
+   * POST /api/v1/certifications/:certificationId/verify
+   */
+  async verifyCertification(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { certificationId } = req.params as Record<string, string>;
+      const { status, notes } = req.body;
+      const adminId = req.user?.id;
+
+      if (!adminId) {
+        throw createError("Unauthorized", 401);
+      }
+
+      const certification = await CertificationService.updateCertification(
+        certificationId,
+        { status: status || 'verified', notes }
+      );
+
+      res.status(200).json({
+        success: true,
+        data: certification
+      });
+    } catch (error) {
+      logger.error("Failed to verify certification", {
+        certificationId: req.params.certificationId,
         error: error instanceof Error ? error.message : error
       });
       next(error);

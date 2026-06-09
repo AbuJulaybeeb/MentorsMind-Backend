@@ -50,7 +50,7 @@ export const SessionMilestoneController = {
    */
   async linkSessionToMilestone(req: Request, res: Response): Promise<void> {
     try {
-      const { bookingId } = req.params;
+      const { bookingId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -89,7 +89,7 @@ export const SessionMilestoneController = {
    */
   async unlinkSessionFromMilestone(req: Request, res: Response): Promise<void> {
     try {
-      const { bookingId } = req.params;
+      const { bookingId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -116,7 +116,7 @@ export const SessionMilestoneController = {
    */
   async getSessionContext(req: Request, res: Response): Promise<void> {
     try {
-      const { bookingId } = req.params;
+      const { bookingId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -141,7 +141,7 @@ export const SessionMilestoneController = {
    */
   async getAvailableSessionsForMilestone(req: Request, res: Response): Promise<void> {
     try {
-      const { milestoneId } = req.params;
+      const { milestoneId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -169,7 +169,7 @@ export const SessionMilestoneController = {
    */
   async getSessionsForMilestone(req: Request, res: Response): Promise<void> {
     try {
-      const { milestoneId } = req.params;
+      const { milestoneId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -194,7 +194,7 @@ export const SessionMilestoneController = {
    */
   async updateSessionMapping(req: Request, res: Response): Promise<void> {
     try {
-      const { bookingId } = req.params;
+      const { bookingId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -267,7 +267,7 @@ export const SessionMilestoneController = {
    */
   async getLearningPathContext(req: Request, res: Response): Promise<void> {
     try {
-      const { mentorId, studentId } = req.params;
+      const { mentorId, studentId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -297,7 +297,7 @@ export const SessionMilestoneController = {
    */
   async getBookingRecommendations(req: Request, res: Response): Promise<void> {
     try {
-      const { mentorId, studentId } = req.params;
+      const { mentorId, studentId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -330,7 +330,7 @@ export const SessionMilestoneController = {
    */
   async createSessionOutcome(req: Request, res: Response): Promise<void> {
     try {
-      const { bookingId } = req.params;
+      const { bookingId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -362,7 +362,7 @@ export const SessionMilestoneController = {
    */
   async getSessionOutcome(req: Request, res: Response): Promise<void> {
     try {
-      const { bookingId } = req.params;
+      const { bookingId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -387,7 +387,7 @@ export const SessionMilestoneController = {
    */
   async analyzeSessionImpact(req: Request, res: Response): Promise<void> {
     try {
-      const { bookingId } = req.params;
+      const { bookingId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -412,7 +412,7 @@ export const SessionMilestoneController = {
    */
   async getHybridModeConfig(req: Request, res: Response): Promise<void> {
     try {
-      const { mentorId } = req.params;
+      const { mentorId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -442,7 +442,7 @@ export const SessionMilestoneController = {
    */
   async updateHybridModeConfig(req: Request, res: Response): Promise<void> {
     try {
-      const { mentorId } = req.params;
+      const { mentorId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {
@@ -486,7 +486,7 @@ export const SessionMilestoneController = {
    */
   async getBookingOptions(req: Request, res: Response): Promise<void> {
     try {
-      const { mentorId, studentId } = req.params;
+      const { mentorId, studentId } = req.params as Record<string, string>;
       const userId = req.user?.id;
 
       if (!userId) {

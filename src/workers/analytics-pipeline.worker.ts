@@ -98,8 +98,8 @@ export const AnalyticsPipelineWorker = new Worker(
   {
     connection: queueConnection,
     concurrency: 5, // Process up to 5 events concurrently
-    removeOnComplete: 100, // Keep last 100 completed jobs
-    removeOnFail: 50, // Keep last 50 failed jobs
+    removeOnComplete: { count: 100 }, // Keep last 100 completed jobs
+    removeOnFail: { count: 50 }, // Keep last 50 failed jobs
   }
 );
 
@@ -176,7 +176,7 @@ async function updateProcessingMetrics(table: string, operation: string): Promis
     // Simple metrics tracking - could be enhanced with Prometheus/StatsD
     const metricKey = `analytics:processing:${table}:${operation}`;
     const currentCount = await CacheService.get(metricKey) || 0;
-    await CacheService.set(metricKey, parseInt(currentCount) + 1, 3600); // 1 hour TTL
+    await CacheService.set(metricKey, Number(currentCount) + 1, 3600); // 1 hour TTL
   } catch (error) {
     // Don't fail the job if metrics update fails
     logger.warn('Failed to update processing metrics', { error, table, operation });
@@ -282,7 +282,7 @@ async function getAnalyticsPipelineHealth(): Promise<any> {
   } catch (error) {
     logger.error('Failed to get analytics pipeline health', { error });
     return {
-      error: error.message,
+      error: (error as Error).message,
       lastHealthCheck: new Date().toISOString()
     };
   }
@@ -318,8 +318,8 @@ export class AnalyticsEventListener {
               type: 'exponential',
               delay: 2000,
             },
-            removeOnComplete: 100,
-            removeOnFail: 50,
+            removeOnComplete: { count: 100 },
+            removeOnFail: { count: 50 },
           });
           
           logger.debug('Analytics event queued for processing', { 

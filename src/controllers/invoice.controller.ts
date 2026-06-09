@@ -16,7 +16,7 @@ export class InvoiceController {
   }
 
   static async getInvoice(req: Request, res: Response): Promise<void> {
-    const invoice = await InvoiceService.getInvoice(req.params.invoiceId);
+    const invoice = await InvoiceService.getInvoice(req.params.invoiceId as string);
     if (!invoice) {
       res.status(404).json({ success: false, message: "Invoice not found" });
       return;
@@ -32,7 +32,7 @@ export class InvoiceController {
   }
 
   static async updateStatus(req: Request, res: Response): Promise<void> {
-    await InvoiceService.updateStatus(req.params.invoiceId, req.body.status);
+    await InvoiceService.updateStatus(req.params.invoiceId as string, req.body.status);
     res.json({ success: true, message: "Invoice status updated" });
   }
 

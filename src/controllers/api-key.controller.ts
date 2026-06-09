@@ -32,7 +32,7 @@ export const ApiKeyController = {
   },
 
   async revoke(req: AuthenticatedRequest, res: Response): Promise<void> {
-    await ApiKeyService.revoke(req.params.id, req.user!.userId);
+    await ApiKeyService.revoke(req.params.id as string, req.user!.userId);
     res.json({ success: true, message: "API key revoked" });
   },
 

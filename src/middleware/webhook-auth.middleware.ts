@@ -29,7 +29,8 @@ export const webhookAuth = async (
 
   if (!apiKey) {
     await WebhookService.logAuthFailure(null, ip, userAgent, 'Missing API key');
-    return ResponseUtil.unauthorized(res, 'API key is required in X-API-Key header');
+    ResponseUtil.unauthorized(res, 'API key is required in X-API-Key header');
+    return;
   }
 
   try {
@@ -37,7 +38,8 @@ export const webhookAuth = async (
 
     if (!webhook) {
       await WebhookService.logAuthFailure(null, ip, userAgent, 'Invalid API key');
-      return ResponseUtil.unauthorized(res, 'Invalid or expired API key');
+      ResponseUtil.unauthorized(res, 'Invalid or expired API key');
+      return;
     }
 
     // Rate limit by API key
@@ -52,13 +54,14 @@ export const webhookAuth = async (
     if (!result.allowed) {
       await WebhookService.logAuthFailure(webhook.id, ip, userAgent, 'Rate limit exceeded');
       res.setHeader('Retry-After', Math.ceil((result.resetTime.getTime() - Date.now()) / 1000));
-      return ResponseUtil.error(res, profile.message, 429);
+      ResponseUtil.error(res, profile.message, 429);
+      return;
     }
 
     req.webhook = webhook;
     next();
   } catch (error: any) {
     logger.error('Webhook authentication error', { error: error.message, ip });
-    return ResponseUtil.error(res, 'Internal server error during authentication', 500);
+    ResponseUtil.error(res, 'Internal server error during authentication', 500);
   }
 };

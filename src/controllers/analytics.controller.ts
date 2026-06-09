@@ -10,8 +10,8 @@ export const AnalyticsController = {
    */
   async getPathAnalytics(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { pathId } = req.params;
-      const { timeframe = 'all' } = req.query;
+      const { pathId } = req.params as Record<string, string>;
+      const timeframe = (req.query.timeframe as string) || 'all';
 
       if (!['week', 'month', 'quarter', 'year', 'all'].includes(timeframe as string)) {
         throw createError("Invalid timeframe. Must be one of: week, month, quarter, year, all", 400);
@@ -41,8 +41,8 @@ export const AnalyticsController = {
    */
   async getStudentProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { studentId } = req.params;
-      const { pathId } = req.query;
+      const { studentId } = req.params as Record<string, string>;
+      const pathId = req.query.pathId as string | undefined;
 
       // Verify access: students can only view their own profile, mentors can view their students
       const requestingUserId = req.user?.id;
@@ -76,7 +76,7 @@ export const AnalyticsController = {
    */
   async getPredictiveInsights(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { studentId, pathId } = req.params;
+      const { studentId, pathId } = req.params as Record<string, string>;
 
       // Verify access
       const requestingUserId = req.user?.id;
@@ -108,7 +108,7 @@ export const AnalyticsController = {
    */
   async getComparisonAnalytics(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { studentId, pathId } = req.params;
+      const { studentId, pathId } = req.params as Record<string, string>;
 
       // Verify access
       const requestingUserId = req.user?.id;
@@ -140,7 +140,7 @@ export const AnalyticsController = {
    */
   async getMentorDashboard(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { mentorId } = req.params;
+      const { mentorId } = req.params as Record<string, string>;
 
       // Verify access: only the mentor themselves or admins can view
       const requestingUserId = req.user?.id;
@@ -171,8 +171,8 @@ export const AnalyticsController = {
    */
   async getMilestoneAnalytics(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { pathId } = req.params;
-      const { timeframe = 'all' } = req.query;
+      const { pathId } = req.params as Record<string, string>;
+      const timeframe = (req.query.timeframe as string) || 'all';
 
       if (!['week', 'month', 'quarter', 'year', 'all'].includes(timeframe as string)) {
         throw createError("Invalid timeframe. Must be one of: week, month, quarter, year, all", 400);
@@ -200,8 +200,8 @@ export const AnalyticsController = {
    */
   async getTrendData(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { pathId } = req.params;
-      const { timeframe = 'month' } = req.query;
+      const { pathId } = req.params as Record<string, string>;
+      const timeframe = (req.query.timeframe as string) || 'month';
 
       if (!['week', 'month', 'quarter', 'year', 'all'].includes(timeframe as string)) {
         throw createError("Invalid timeframe. Must be one of: week, month, quarter, year, all", 400);
@@ -231,8 +231,8 @@ export const AnalyticsController = {
    */
   async getBottlenecks(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { pathId } = req.params;
-      const { timeframe = 'all' } = req.query;
+      const { pathId } = req.params as Record<string, string>;
+      const timeframe = (req.query.timeframe as string) || 'all';
 
       // Get milestone analytics first
       const timeFilter = LearningAnalyticsService['getTimeFilter'](timeframe as string);

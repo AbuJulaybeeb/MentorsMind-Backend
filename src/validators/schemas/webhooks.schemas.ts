@@ -17,12 +17,12 @@ const filterStatusEnum = z.enum(SUPPORTED_FILTER_STATUSES);
 export const createWebhookSchema = z.object({
   body: z.object({
     url: z
-      .string({ required_error: 'url is required' })
+      .string({ error: 'url is required' })
       .url('url must be a valid URL')
       .max(2048, 'url must not exceed 2048 characters'),
 
     event_types: z
-      .array(eventTypeEnum, { required_error: 'event_types is required' })
+      .array(eventTypeEnum, { error: 'event_types is required' })
       .min(1, 'event_types must contain at least one event')
       .max(50, 'event_types must not exceed 50 entries'),
 

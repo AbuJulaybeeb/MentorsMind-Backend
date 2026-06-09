@@ -67,7 +67,7 @@ router.post(
 // POST /api/v1/certifications/tests/:testId/start
 router.post(
   "/tests/:testId/start",
-  authorize(["mentor"]),
+  authorize("mentor"),
   CertificationController.startSkillTest,
 );
 
@@ -75,7 +75,7 @@ router.post(
 // POST /api/v1/certifications/tests/attempts/:attemptId/submit
 router.post(
   "/tests/attempts/:attemptId/submit",
-  authorize(["mentor"]),
+  authorize("mentor"),
   CertificationController.submitTestAnswers,
 );
 
@@ -87,7 +87,7 @@ router.post(
 // POST /api/v1/certifications/background-checks
 router.post(
   "/background-checks",
-  authorize(["mentor"]),
+  authorize("mentor"),
   CertificationController.initiateBackgroundCheck,
 );
 
@@ -95,7 +95,7 @@ router.post(
 // GET /api/v1/certifications/background-checks/:checkId
 router.get(
   "/background-checks/:checkId",
-  authorize(["mentor", "admin"]),
+  authorize("mentor", "admin"),
   CertificationController.getBackgroundCheck,
 );
 
@@ -107,7 +107,7 @@ router.get(
 // GET /api/v1/certifications/onboarding/:mentorId
 router.get(
   "/onboarding/:mentorId",
-  authorize(["mentor", "admin"]),
+  authorize("mentor", "admin"),
   CertificationController.getOnboardingProgress,
 );
 
@@ -115,7 +115,7 @@ router.get(
 // POST /api/v1/certifications/onboarding/:mentorId/steps/:stepId/complete
 router.post(
   "/onboarding/:mentorId/steps/:stepId/complete",
-  authorize(["mentor"]),
+  authorize("mentor"),
   CertificationController.completeOnboardingStep,
 );
 

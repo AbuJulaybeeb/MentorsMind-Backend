@@ -5,6 +5,7 @@ export interface Wallet {
   user_id: string;
   stellar_public_key: string;
   status: "active" | "inactive" | "suspended";
+  wallet_activated?: boolean;
   created_at: Date;
   updated_at: Date;
 }

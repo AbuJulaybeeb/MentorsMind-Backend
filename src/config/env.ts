@@ -211,6 +211,25 @@ const envSchema = z.object({
   ELASTICSEARCH_API_KEY: z.string().optional(),
   ELASTICSEARCH_ENABLED: z.enum(["true", "false"]).default("true"),
   ELASTICSEARCH_INDEX_PREFIX: z.string().default("mentorminds"),
+
+  // Stellar (additional keys)
+  STELLAR_FUNDING_SECRET: z.string().optional(),
+
+  // Recording / Video
+  RECORDING_PROVIDER: z.string().optional(),
+  AWS_IVS_CHANNEL_ARN: z.string().optional(),
+  AWS_IVS_REGION: z.string().optional(),
+  AGORA_APP_ID: z.string().optional(),
+  AGORA_APP_CERTIFICATE: z.string().optional(),
+  RECORDING_RETENTION_DAYS: z.string().regex(/^\d+$/).default("30"),
+  RECORDING_TRANSCRIPTION_ENABLED: z.enum(["true", "false"]).default("false"),
+  TRANSCRIPTION_PROVIDER: z.string().optional(),
+
+  // Data Retention
+  RETENTION_NOTIFICATIONS_DAYS: z.string().regex(/^\d+$/).default("90"),
+  RETENTION_AUDIT_LOGS_YEARS: z.string().regex(/^\d+$/).default("7"),
+  RETENTION_PAYMENTS_YEARS: z.string().regex(/^\d+$/).default("7"),
+  RETENTION_SESSIONS_YEARS: z.string().regex(/^\d+$/).default("2"),
 });
 
 // ---------------------------------------------------------------------------

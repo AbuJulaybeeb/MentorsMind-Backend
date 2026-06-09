@@ -9,7 +9,6 @@
 
 import pool from "../config/database";
 import { enqueueEmail } from "../queues/email.queue";
-import { NotificationService } from "../services/notification.service";
 import {
   NotificationService,
   NotificationChannel,
@@ -242,7 +241,7 @@ export async function runSessionReminderJob(): Promise<void> {
   const window15mEnd = new Date(now.getTime() + 20 * 60 * 1000).toISOString();
 
   await Promise.all([
-    processReminders(window24hStart, window24hEnd, "reminder_24h_sent", "24h"),
-    processReminders(window15mStart, window15mEnd, "reminder_15m_sent", "15m"),
+    processReminders(window24hStart, window24hEnd, "24h", "24h"),
+    processReminders(window15mStart, window15mEnd, "15m", "15m"),
   ]);
 }

@@ -32,8 +32,8 @@ class RecordingTranscriptionService {
   private enabled: boolean;
 
   constructor() {
-    this.provider = recordingConfig.transcriptionProvider;
-    this.enabled = recordingConfig.transcriptionEnabled;
+    this.provider = recordingConfig.transcriptionProvider || 'aws';
+    this.enabled = !!recordingConfig.transcriptionEnabled;
   }
 
   /**
@@ -106,7 +106,7 @@ class RecordingTranscriptionService {
         TranscriptionJobName: `transcription-${transcriptionId}`,
         Media: { MediaFileUri: mediaFileUri },
         MediaFormat: 'mp4',
-        LanguageCode: language,
+        LanguageCode: language as any,
         Settings: {
           ShowSpeakerLabels: true,
           MaxSpeakerLabels: 2,
@@ -122,9 +122,9 @@ class RecordingTranscriptionService {
       );
 
       logger.info(`Started AWS transcription job: ${response.TranscriptionJob?.TranscriptionJobName}`);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to start AWS transcription:', error);
-      await this.updateTranscriptionStatus(transcriptionId, 'failed', error.message);
+      await this.updateTranscriptionStatus(transcriptionId, 'failed', error?.message || String(error));
       throw error;
     }
   }
@@ -160,9 +160,9 @@ class RecordingTranscriptionService {
       );
 
       logger.info(`Started Google transcription job: ${jobId}`);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to start Google transcription:', error);
-      await this.updateTranscriptionStatus(transcriptionId, 'failed', error.message);
+      await this.updateTranscriptionStatus(transcriptionId, 'failed', error?.message || String(error));
       throw error;
     }
   }
@@ -198,9 +198,9 @@ class RecordingTranscriptionService {
       );
 
       logger.info(`Started OpenAI transcription job: ${jobId}`);
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to start OpenAI transcription:', error);
-      await this.updateTranscriptionStatus(transcriptionId, 'failed', error.message);
+      await this.updateTranscriptionStatus(transcriptionId, 'failed', error?.message || String(error));
       throw error;
     }
   }

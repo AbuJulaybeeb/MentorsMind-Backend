@@ -11,7 +11,7 @@ export const SessionFeedbackController = {
 
   async getForSession(req: AuthenticatedRequest, res: Response): Promise<void> {
     const feedback = await SessionFeedbackService.getForSession(
-      req.params.sessionId,
+      req.params.sessionId as string,
     );
     res.json({ success: true, data: feedback });
   },
@@ -20,7 +20,7 @@ export const SessionFeedbackController = {
     req: AuthenticatedRequest,
     res: Response,
   ): Promise<void> {
-    const mentorId = req.params.mentorId;
+    const mentorId = req.params.mentorId as string;
     const page = parseInt(req.query.page as string) || 1;
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
     const result = await SessionFeedbackService.getMentorFeedback(
@@ -36,7 +36,7 @@ export const SessionFeedbackController = {
     res: Response,
   ): Promise<void> {
     const stats = await SessionFeedbackService.getMentorQualityStats(
-      req.params.mentorId,
+      req.params.mentorId as string,
     );
     res.json({ success: true, data: stats });
   },

@@ -1,5 +1,4 @@
 import { WebSocket } from "ws";
-import { WebSocket } from "ws";
 import { AuthenticatedWebSocket } from "../ws-auth.middleware";
 import { SessionModel } from "../../models/session.model";
 import { logger } from "../../utils/logger.utils";

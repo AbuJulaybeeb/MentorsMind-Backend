@@ -131,10 +131,10 @@ export const OAuthController = {
      * DELETE /api/v1/auth/oauth/:provider
      * Unlink OAuth provider from user account
      */
-    async unlinkProvider(req: Request, res: Response): Promise<void> {
+    async unlinkProvider(req: Request, res: Response): Promise<any> {
         try {
             const userId = (req as any).user?.userId;
-            const provider = req.params.provider;
+            const provider = req.params.provider as string;
 
             if (!userId) {
                 return res.status(401).json({ success: false, error: 'Unauthorized' });
@@ -200,7 +200,7 @@ export const OAuthController = {
      * GET /api/v1/auth/oauth/providers
      * Get list of linked OAuth providers for current user
      */
-    async getLinkedProviders(req: Request, res: Response): Promise<void> {
+    async getLinkedProviders(req: Request, res: Response): Promise<any> {
         try {
             const userId = (req as any).user?.userId;
 

@@ -289,4 +289,103 @@ export const AdminService = {
       entityId: key,
     });
   },
+
+  async suspendUser(
+    id: string,
+    adminId: string,
+    reason: string,
+    expiresAt: Date | null,
+    ipAddress?: string,
+    userAgent?: string | null,
+  ): Promise<UserRecord | null> {
+    const { rows } = await pool.query<UserRecord>(
+      `UPDATE users 
+       SET status = 'suspended',
+           suspension_reason = $1,
+           suspended_at = NOW(),
+           suspended_by = $2,
+           suspension_expires_at = $3,
+           is_active = false,
+           updated_at = NOW() 
+       WHERE id = $4 AND deleted_at IS NULL RETURNING *`,
+      [reason, adminId, expiresAt, id],
+    );
+    if (rows[0]) {
+      await AuditLogService.log({
+        userId: adminId,
+        action: 'USER_SUSPENDED',
+        resourceType: 'user',
+        resourceId: id,
+        newValue: { reason, expiresAt },
+        ipAddress,
+        userAgent,
+      });
+      await TokenService.revokeAllUserSessions(id);
+    }
+    return rows[0] || null;
+  },
+
+  async banUser(
+    id: string,
+    adminId: string,
+    reason: string,
+    ipAddress?: string,
+    userAgent?: string | null,
+  ): Promise<UserRecord | null> {
+    const { rows } = await pool.query<UserRecord>(
+      `UPDATE users 
+       SET status = 'banned',
+           ban_reason = $1,
+           banned_at = NOW(),
+           banned_by = $2,
+           is_active = false,
+           updated_at = NOW() 
+       WHERE id = $3 AND deleted_at IS NULL RETURNING *`,
+      [reason, adminId, id],
+    );
+    if (rows[0]) {
+      await AuditLogService.log({
+        userId: adminId,
+        action: 'USER_BANNED',
+        resourceType: 'user',
+        resourceId: id,
+        newValue: { reason },
+        ipAddress,
+        userAgent,
+      });
+      await TokenService.revokeAllUserSessions(id);
+    }
+    return rows[0] || null;
+  },
+
+  async unsuspendUser(
+    id: string,
+    adminId: string,
+    ipAddress?: string,
+    userAgent?: string | null,
+  ): Promise<UserRecord | null> {
+    const { rows } = await pool.query<UserRecord>(
+      `UPDATE users 
+       SET status = 'active',
+           suspension_reason = NULL,
+           suspended_at = NULL,
+           suspended_by = NULL,
+           suspension_expires_at = NULL,
+           is_active = true,
+           updated_at = NOW() 
+       WHERE id = $1 AND deleted_at IS NULL RETURNING *`,
+      [id],
+    );
+    if (rows[0]) {
+      await AuditLogService.log({
+        userId: adminId,
+        action: 'USER_UNSUSPENDED',
+        resourceType: 'user',
+        resourceId: id,
+        ipAddress,
+        userAgent,
+      });
+    }
+    return rows[0] || null;
+  },
 };

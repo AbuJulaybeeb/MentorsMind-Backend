@@ -70,7 +70,7 @@ export const ReferralController = {
    */
   async validateReferralCode(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { code } = req.params;
+      const { code } = req.params as Record<string, string>;
 
       const referralCode = await ReferralService.getReferralCodeByCode(code);
 
@@ -198,7 +198,7 @@ export const ReferralController = {
    */
   async updateReferral(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { referralId } = req.params;
+      const { referralId } = req.params as Record<string, string>;
       const { status, conversionType, referredUserId, metadata } = req.body;
 
       const referral = await ReferralService.updateReferral(referralId, {
@@ -259,7 +259,7 @@ export const ReferralController = {
    */
   async getAffiliateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userId } = req.params;
+      const { userId } = req.params as Record<string, string>;
 
       // Users can only view their own profile, admins can view all
       if (req.user?.role !== 'admin' && req.user?.id !== userId) {
@@ -291,7 +291,7 @@ export const ReferralController = {
    */
   async updateAffiliateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userId } = req.params;
+      const { userId } = req.params as Record<string, string>;
 
       // Users can only update their own profile
       if (req.user?.id !== userId) {
@@ -325,7 +325,7 @@ export const ReferralController = {
    */
   async getAffiliateDashboard(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userId } = req.params;
+      const { userId } = req.params as Record<string, string>;
 
       // Users can only view their own dashboard
       if (req.user?.id !== userId) {
@@ -353,7 +353,7 @@ export const ReferralController = {
    */
   async approveAffiliateProfile(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userId } = req.params;
+      const { userId } = req.params as Record<string, string>;
       const approvedBy = req.user?.id;
 
       if (!approvedBy) {
@@ -401,7 +401,7 @@ export const ReferralController = {
    */
   async requestPayout(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { userId } = req.params;
+      const { userId } = req.params as Record<string, string>;
       const { amount, payoutType, metadata } = req.body;
 
       // Get affiliate profile

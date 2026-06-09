@@ -116,7 +116,7 @@ export const SmartSchedulingService = {
 
       // Filter B: Check availability defined by mentor's availabilitySchedule
       const mentorTime = slotStart.setZone(mentorTz);
-      const weekday = mentorTime.weekdayLong.toLowerCase(); // 'monday', 'tuesday', etc.
+      const weekday = (mentorTime.weekdayLong || 'monday').toLowerCase(); // 'monday', 'tuesday', etc.
       const dayConfig = schedule[weekday];
 
       let isAvailable = false;

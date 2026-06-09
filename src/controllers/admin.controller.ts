@@ -610,10 +610,11 @@ export const AdminController = {
     try {
       const rule = await IpFilterService.addRule({
         ipRange,
-        rule_type: "allow",
+        ruleType: "allow",
         context: "global",
         reason,
-        created_by: req.user!.userId,
+        adminId: req.user!.id,
+        ipAddress: extractIpAddress(req),
       });
       ResponseUtil.success(res, rule, "Allowlist rule added successfully");
     } catch (err: any) {
@@ -627,10 +628,10 @@ export const AdminController = {
     res: Response,
   ): Promise<void> {
     const { deliveryId } = req.params;
-    const userId = req.user!.userId;
+    const userId = req.user!.id;
 
     try {
-      const result = await WebhookService.retryDelivery(deliveryId, userId);
+      const result = await WebhookService.retryDelivery(deliveryId as string, userId);
       
       if (result.success) {
         ResponseUtil.success(res, null, result.message);

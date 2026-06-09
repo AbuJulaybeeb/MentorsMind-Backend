@@ -570,4 +570,12 @@ export const AdvancedAnalyticsService = {
       throw error;
     }
   },
+
+  /**
+   * Parse a period string (e.g. "30d", "7d") into number of days.
+   * Forwards to AnalyticsService.parsePeriod.
+   */
+  parsePeriod(period: string): number {
+    return AnalyticsService.parsePeriod(period);
+  },
 };

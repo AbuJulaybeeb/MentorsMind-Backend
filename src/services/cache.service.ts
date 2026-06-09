@@ -206,6 +206,9 @@ export class CacheService {
     return { ...metrics };
   }
 
+  /** Alias for invalidatePattern — backward compat */
+  static invalidate = CacheService.invalidatePattern;
+
   /** Returns whether Redis is active */
   static isDistributed(): boolean {
     return redisAvailable;

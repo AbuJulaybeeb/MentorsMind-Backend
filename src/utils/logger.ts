@@ -44,9 +44,10 @@ export const INSTANCE_ID: string =
 
 type StructuredLogPayload = Record<string, unknown>;
 
+// Allow call sites to pass unknown as the second argument (common `error` values)
 type StructuredLogMethod = {
-  (msg: string, payload?: StructuredLogPayload, ...args: unknown[]): void;
-  (payload: StructuredLogPayload): void;
+  (msg: string, payload?: unknown, ...args: unknown[]): void;
+  (payload: unknown): void;
 };
 
 type StructuredLogger = pino.Logger & {
@@ -57,7 +58,8 @@ type StructuredLogger = pino.Logger & {
   debug: StructuredLogMethod;
   trace: StructuredLogMethod;
   silent: StructuredLogMethod;
-  child: (bindings: Bindings, options?: ChildLoggerOptions) => StructuredLogger;
+  // Accept flexible child signature from pino and return our wrapped logger
+  child: (...args: any[]) => StructuredLogger;
 };
 
 const isStructuredLogPayload = (
@@ -89,7 +91,10 @@ function wrapStructuredLogger(baseLogger: pino.Logger): StructuredLogger {
       ) {
         const maskedMsg = maskPIIDeep(first) as string;
         const maskedPayload = maskPIIDeep(second) as Record<string, unknown>;
-        return originalMethod.call(baseLogger, { msg: maskedMsg, ...maskedPayload });
+        return originalMethod.call(baseLogger, {
+          msg: maskedMsg,
+          ...maskedPayload,
+        });
       }
 
       if (
@@ -97,12 +102,16 @@ function wrapStructuredLogger(baseLogger: pino.Logger): StructuredLogger {
         rest.length === 0 &&
         second instanceof Error
       ) {
-        return originalMethod.call(baseLogger, { msg: maskPIIDeep(first) as string, err: second });
+        return originalMethod.call(baseLogger, {
+          msg: maskPIIDeep(first) as string,
+          err: second,
+        });
       }
 
       // Fallback: mask string messages
-      const maskedFirst = typeof first === "string" ? maskPIIDeep(first) : first;
-      return originalMethod.call(baseLogger, maskedFirst, second, ...rest);
+      const maskedFirst =
+        typeof first === "string" ? maskPIIDeep(first) : first;
+      return originalMethod.call(baseLogger, maskedFirst as any, second, ...rest);
     }) as StructuredLogMethod;
   };
 
@@ -158,7 +167,7 @@ export function withCorrelationId(correlationId: string): pino.Logger {
 }
 
 // Re-export sampling helper for convenience
-export { sampleLog } from './log-sampler';
+export { sampleLog } from "./log-sampler";
 
 // ---------------------------------------------------------------------------
 // Sensitive-field redaction helper (kept for backward-compat)
