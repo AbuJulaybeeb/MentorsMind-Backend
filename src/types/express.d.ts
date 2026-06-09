@@ -22,6 +22,9 @@ declare module 'express-serve-static-core' {
   interface Query {
     [key: string]: string | undefined;
   }
+  interface ParamsDictionary {
+    [key: string]: string;
+  }
 }
 
 export {};

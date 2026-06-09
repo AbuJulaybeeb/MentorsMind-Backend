@@ -39,7 +39,7 @@ export const TenantController = {
   },
 
   async getById(req: Request, res: Response): Promise<void> {
-    const tenant = await TenantService.getById(req.params.id);
+    const tenant = await TenantService.getById(req.params.id as string);
     if (!tenant) {
       res.status(404).json({ success: false, error: 'Tenant not found.' });
       return;
@@ -71,7 +71,7 @@ export const TenantController = {
       res.status(400).json({ success: false, error: parsed.error.flatten() });
       return;
     }
-    const tenant = await TenantService.update(req.params.id, parsed.data);
+    const tenant = await TenantService.update(req.params.id as string, parsed.data);
     if (!tenant) {
       res.status(404).json({ success: false, error: 'Tenant not found.' });
       return;

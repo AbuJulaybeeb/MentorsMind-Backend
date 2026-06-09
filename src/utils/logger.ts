@@ -110,8 +110,8 @@ function wrapStructuredLogger(baseLogger: pino.Logger): StructuredLogger {
 
       // Fallback: mask string messages
       const maskedFirst =
-        typeof first === "string" ? maskPIIDeep(first) : first;
-      return originalMethod.call(baseLogger, maskedFirst as any, second, ...rest);
+        typeof first === "string" ? (maskPIIDeep(first) as string) : first;
+      return originalMethod.call(baseLogger, maskedFirst as any, second as any, ...rest);
     }) as StructuredLogMethod;
   };
 
@@ -119,7 +119,7 @@ function wrapStructuredLogger(baseLogger: pino.Logger): StructuredLogger {
     ["fatal", "error", "warn", "info", "debug", "trace", "silent"] as const
   ).forEach(wrapMethod);
 
-  wrappedLogger.child = (bindings: Bindings, options?: ChildLoggerOptions) =>
+  (wrappedLogger as any).child = (bindings: any, options?: any) =>
     wrapStructuredLogger(originalChild(bindings, options));
 
   return wrappedLogger;

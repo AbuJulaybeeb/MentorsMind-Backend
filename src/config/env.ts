@@ -159,7 +159,7 @@ const envSchema = z.object({
   MFA_TOTP_ISSUER: z.string().default("MentorMinds"),
 
   // Platform
-  PLATFORM_FEE_PERCENTAGE: z.string().regex(/^\d+$/).default("5"),
+  PLATFORM_FEE_PERCENTAGE: z.string().regex(/^\d+$/).default("10"),
 
   // Secrets management
   SECRETS_PROVIDER: z.enum(["env", "aws", "vault"]).default("env"),

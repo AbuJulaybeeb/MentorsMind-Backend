@@ -185,7 +185,7 @@ export const MilestoneCompletionService = {
       const result: MilestoneCompletion = {
         milestoneId,
         enrollmentId,
-        completedAt: completedProgress.completed_at!,
+        completedAt: completedProgress.completed_at!.toISOString(),
         certificateGenerated,
         nextMilestone: nextMilestone
           ? MilestoneModel.transformToMilestone(nextMilestone)

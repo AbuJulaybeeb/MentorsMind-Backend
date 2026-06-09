@@ -329,9 +329,9 @@ export const CalendarService = {
         await client.refreshAccessToken();
         await persistGoogleCredentials(
           userId,
-          client.credentials.access_token,
-          client.credentials.refresh_token,
-          client.credentials.expiry_date,
+          client.credentials.access_token || undefined,
+          client.credentials.refresh_token || undefined,
+          client.credentials.expiry_date || undefined,
         );
       } catch (err) {
         if (isInvalidGrantError(err)) {

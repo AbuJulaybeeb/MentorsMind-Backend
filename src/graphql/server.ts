@@ -4,7 +4,7 @@ import {
   ApolloServerPluginLandingPageLocalDefault,
   ApolloServerPluginLandingPageProductionDefault,
 } from '@apollo/server/plugin/landingPage/default';
-import { Express, json } from 'express';
+import { Application, json } from 'express';
 import jwt from 'jsonwebtoken';
 import { GraphQLError, ValidationContext } from 'graphql';
 import typeDefs from './schema';
@@ -53,7 +53,7 @@ const createQueryComplexityRule = (maximumComplexity: number) => {
   };
 };
 
-export async function initializeGraphQL(app: Express): Promise<void> {
+export async function initializeGraphQL(app: Application): Promise<void> {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
@@ -73,15 +73,16 @@ export async function initializeGraphQL(app: Express): Promise<void> {
   app.use(
     graphqlConfig.path,
     json(),
-    expressMiddleware(server, {
-      context: async ({ req }) => {
+    expressMiddleware(server as any, {
+      context: async ({ req, res }) => {
         const payload = getUserFromAuthorizationHeader(req.headers.authorization);
         return {
           req,
+          res,
           user: payload ? { userId: payload.sub, role: payload.role } : undefined,
           loaders: createLoaders(),
         };
       },
-    }),
+    }) as any,
   );
 }

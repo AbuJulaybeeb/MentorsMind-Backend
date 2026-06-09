@@ -47,7 +47,7 @@ export const TaxReportingController = {
         return;
       }
 
-      const taxYear = parseInt(req.params.year, 10);
+      const taxYear = parseInt(req.params.year as string, 10);
       if (isNaN(taxYear) || taxYear < 2020 || taxYear > currentYear) {
         ResponseUtil.error(res, "Invalid tax year", 400);
         return;
@@ -76,7 +76,7 @@ export const TaxReportingController = {
         return;
       }
 
-      const taxYear = parseInt(req.params.year, 10);
+      const taxYear = parseInt(req.params.year as string, 10);
       if (isNaN(taxYear) || taxYear < 2020 || taxYear > currentYear) {
         ResponseUtil.error(res, "Invalid tax year", 400);
         return;

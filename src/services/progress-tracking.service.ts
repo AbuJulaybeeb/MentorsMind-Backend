@@ -253,7 +253,7 @@ export const ProgressTrackingService = {
       const result: MilestoneCompletion = {
         milestoneId,
         enrollmentId,
-        completedAt: completedProgress.completed_at!,
+        completedAt: completedProgress.completed_at!.toISOString(),
         certificateGenerated: false, // TODO: Implement certificate generation
         nextMilestone: nextMilestone
           ? MilestoneModel.transformToMilestone(nextMilestone)

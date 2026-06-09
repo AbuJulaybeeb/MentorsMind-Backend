@@ -531,12 +531,20 @@ The MentorMinds Team
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    const metricMap: Record<string, 'total_sent' | 'total_delivered' | 'total_failed' | 'total_opened' | 'total_clicked'> = {
+      sent: 'total_sent',
+      delivered: 'total_delivered',
+      failed: 'total_failed',
+      opened: 'total_opened',
+      clicked: 'total_clicked'
+    };
+
     try {
       await NotificationAnalyticsModel.incrementMetric(
         today,
         type,
         channel,
-        metric,
+        metricMap[metric],
       );
     } catch (error) {
       logger.error("Failed to update notification analytics", { error });

@@ -65,7 +65,7 @@ export const EventStoreModel = {
     return rows;
   },
 
-  async saveSnapshot(
+  async createSnapshot(
     snapshot: Omit<Snapshot, "id" | "createdAt">,
   ): Promise<Snapshot | null> {
     const query = `
@@ -100,5 +100,48 @@ export const EventStoreModel = {
     `;
     const { rows } = await db.query(query, [aggregateId]);
     return rows[0] || null;
+  },
+
+  async getLatestVersion(aggregateId: string): Promise<number> {
+    const query = `
+      SELECT COALESCE(MAX(version), 0) as version
+      FROM domain_events
+      WHERE aggregate_id = $1;
+    `;
+    const { rows } = await db.query(query, [aggregateId]);
+    return rows[0].version;
+  },
+
+  async replay(
+    aggregateId: string,
+    _aggregateType: string,
+    applyEvent: (state: Record<string, any>, event: DomainEvent) => Record<string, any>,
+    initialState: Record<string, any> = {},
+    toVersion?: number,
+  ): Promise<Record<string, any>> {
+    const snapshot = await this.getLatestSnapshot(aggregateId);
+    let state = snapshot ? snapshot.data : initialState;
+    const fromVersion = snapshot ? snapshot.version + 1 : 1;
+
+    let query = `
+      SELECT * FROM domain_events
+      WHERE aggregate_id = $1 AND version >= $2
+    `;
+    const params: any[] = [aggregateId, fromVersion];
+
+    if (toVersion) {
+      query += ` AND version <= $3`;
+      params.push(toVersion);
+    }
+
+    query += ` ORDER BY version ASC;`;
+
+    const { rows } = await db.query(query, params);
+
+    for (const event of rows) {
+      state = applyEvent(state, event);
+    }
+
+    return state;
   },
 };

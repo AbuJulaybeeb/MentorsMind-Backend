@@ -224,7 +224,7 @@ export const AffiliateService = {
       const tier = await this.getRewardTier(profile.tierId!);
 
       // Get next tier
-      const nextTier = await this.getNextTier(profile.successfulReferrals);
+      const nextTier: RewardTier | undefined = (await this.getNextTier(profile.successfulReferrals)) ?? undefined;
       const referralsToNextTier = nextTier 
         ? nextTier.minReferrals - profile.successfulReferrals 
         : 0;
@@ -427,7 +427,7 @@ export const AffiliateService = {
   },
 
   // Helper methods
-  private calculateNextPayoutDate(schedule: string): Date {
+  calculateNextPayoutDate(schedule: string): Date {
     const now = new Date();
     const nextPayout = new Date(now);
 
@@ -448,7 +448,7 @@ export const AffiliateService = {
     return nextPayout;
   },
 
-  private async simulatePayout(payoutId: string): Promise<void> {
+  async simulatePayout(payoutId: string): Promise<void> {
     try {
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 5000));
@@ -485,7 +485,7 @@ export const AffiliateService = {
     }
   },
 
-  private transformAffiliateProfile(row: any): AffiliateProfile {
+  transformAffiliateProfile(row: any): AffiliateProfile {
     return {
       id: row.id,
       userId: row.user_id,
@@ -521,7 +521,7 @@ export const AffiliateService = {
     };
   },
 
-  private transformRewardTier(row: any): RewardTier {
+  transformRewardTier(row: any): RewardTier {
     return {
       id: row.id,
       name: row.name,
@@ -538,7 +538,7 @@ export const AffiliateService = {
     };
   },
 
-  private transformRewardPayout(row: any): RewardPayout {
+  transformRewardPayout(row: any): RewardPayout {
     return {
       id: row.id,
       affiliateId: row.affiliate_id,

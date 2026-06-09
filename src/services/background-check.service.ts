@@ -196,7 +196,7 @@ export const BackgroundCheckService = {
    * Simulate background check (for development/testing)
    * In production, this would integrate with actual providers
    */
-  private async simulateBackgroundCheck(checkId: string): Promise<void> {
+  async simulateBackgroundCheck(checkId: string): Promise<void> {
     try {
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 5000));
@@ -229,7 +229,7 @@ export const BackgroundCheckService = {
     }
   },
 
-  private transformBackgroundCheck(row: any): BackgroundCheck {
+  transformBackgroundCheck(row: any): BackgroundCheck {
     return {
       id: row.id,
       mentorId: row.mentor_id,

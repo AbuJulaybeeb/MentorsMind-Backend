@@ -3,7 +3,7 @@ import { SessionTranscriptionService } from "../services/session-transcription.s
 
 export class SessionTranscriptionController {
   static async getTranscript(req: Request, res: Response): Promise<void> {
-    const { sessionId } = req.params;
+    const sessionId = req.params.sessionId as string;
     const transcript =
       await SessionTranscriptionService.getTranscript(sessionId);
     if (!transcript) {
@@ -14,7 +14,7 @@ export class SessionTranscriptionController {
   }
 
   static async saveTranscript(req: Request, res: Response): Promise<void> {
-    const { sessionId } = req.params;
+    const sessionId = req.params.sessionId as string;
     const transcript = await SessionTranscriptionService.saveTranscript({
       ...req.body,
       sessionId,
@@ -23,7 +23,7 @@ export class SessionTranscriptionController {
   }
 
   static async updateTranscript(req: Request, res: Response): Promise<void> {
-    const { sessionId } = req.params;
+    const sessionId = req.params.sessionId as string;
     await SessionTranscriptionService.updateTranscript(sessionId, req.body);
     res.json({ success: true, message: "Transcript updated" });
   }
@@ -39,7 +39,8 @@ export class SessionTranscriptionController {
   }
 
   static async saveTranslation(req: Request, res: Response): Promise<void> {
-    const { sessionId, language } = req.params;
+    const sessionId = req.params.sessionId as string;
+    const language = req.params.language as string;
     const { segments, summary } = req.body;
     await SessionTranscriptionService.saveTranslation(
       sessionId,
@@ -51,7 +52,8 @@ export class SessionTranscriptionController {
   }
 
   static async getTranslation(req: Request, res: Response): Promise<void> {
-    const { sessionId, language } = req.params;
+    const sessionId = req.params.sessionId as string;
+    const language = req.params.language as string;
     const translation = await SessionTranscriptionService.getTranslation(
       sessionId,
       language,

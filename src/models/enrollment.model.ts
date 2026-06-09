@@ -185,7 +185,7 @@ export const EnrollmentModel = {
     totalPaid?: number
   ): Promise<PathEnrollmentRecord | null> {
     const fields = ['payment_status = $2'];
-    const values = [id, paymentStatus];
+    const values: any[] = [id, paymentStatus];
 
     if (totalPaid !== undefined) {
       fields.push('total_paid = $3');
@@ -212,7 +212,7 @@ export const EnrollmentModel = {
       `DELETE FROM path_enrollments WHERE id = $1`,
       [id]
     );
-    return rowCount > 0;
+    return (rowCount ?? 0) > 0;
   },
 
   // Transform database record to API interface
@@ -340,7 +340,7 @@ export const MilestoneProgressModel = {
       'progress_percentage = 100',
       'completed_at = CURRENT_TIMESTAMP'
     ];
-    const values = [enrollmentId, milestoneId, 'completed'];
+    const values: any[] = [enrollmentId, milestoneId, 'completed'];
     let idx = 4;
 
     if (progress.started_at === null) {

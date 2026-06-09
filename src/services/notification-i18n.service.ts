@@ -10,7 +10,7 @@ export class NotificationI18nService {
    */
   static getTitle(type: string, language: SupportedLanguage = 'en', options?: any): string {
     const t = getT(language);
-    return t(`notifications.types.${type}`, options);
+    return t(`notifications.types.${type}`, options) as string;
   }
 
   /**
@@ -18,7 +18,7 @@ export class NotificationI18nService {
    */
   static getMessage(key: string, language: SupportedLanguage = 'en', options?: any): string {
     const t = getT(language);
-    return t(`notifications.messages.${key}`, options);
+    return t(`notifications.messages.${key}`, options) as string;
   }
 
   /**
@@ -65,15 +65,15 @@ export class NotificationI18nService {
    */
   static getError(category: string, key: string, language: SupportedLanguage = 'en', options?: any): string {
     const t = getT(language);
-    return t(`errors.${category}.${key}`, options);
+    return t(`errors.${category}.${key}`, options) as string;
   }
 
   /**
-   * Get translated validation error
+   * Get translated validation error message
    */
   static getValidationError(key: string, language: SupportedLanguage = 'en', options?: any): string {
     const t = getT(language);
-    return t(`errors.validation.${key}`, options);
+    return t(`errors.validation.${key}`, options) as string;
   }
 }
 

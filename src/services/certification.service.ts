@@ -458,7 +458,7 @@ export const CertificationService = {
   },
 
   // Helper methods
-  private transformCertificationType(row: any): CertificationType {
+  transformCertificationType(row: any): CertificationType {
     return {
       id: row.id,
       name: row.name,
@@ -476,7 +476,7 @@ export const CertificationService = {
     };
   },
 
-  private transformCertification(row: any): MentorCertification {
+  transformCertification(row: any): MentorCertification {
     return {
       id: row.id,
       mentorId: row.mentor_id,
@@ -503,14 +503,14 @@ export const CertificationService = {
     };
   },
 
-  private calculateCertificationLevel(verifiedCount: number): 'basic' | 'intermediate' | 'advanced' | 'expert' {
+  calculateCertificationLevel(verifiedCount: number): 'basic' | 'intermediate' | 'advanced' | 'expert' {
     if (verifiedCount >= 6) return 'expert';
     if (verifiedCount >= 4) return 'advanced';
     if (verifiedCount >= 2) return 'intermediate';
     return 'basic';
   },
 
-  private calculateTrustScore(certifications: MentorCertification[]): number {
+  calculateTrustScore(certifications: MentorCertification[]): number {
     let score = 0;
 
     // Base score for each verified certification
@@ -535,7 +535,7 @@ export const CertificationService = {
     return Math.max(0, Math.min(100, score));
   },
 
-  private async invalidateMentorCache(mentorId: string): Promise<void> {
+  async invalidateMentorCache(mentorId: string): Promise<void> {
     await Promise.all([
       CacheService.del(`certification:mentor:${mentorId}:true`),
       CacheService.del(`certification:mentor:${mentorId}:false`),

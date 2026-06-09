@@ -9,6 +9,8 @@ import {
   Resource
 } from "./learning-path.model";
 
+export { Milestone, Prerequisite, CompletionCriteria, Resource };
+
 export interface PrerequisiteRecord {
   id: string;
   milestone_id: string;
@@ -43,7 +45,7 @@ export const CreateMilestoneSchema = z.object({
     title: z.string(),
     url: z.string().url().optional(),
     content: z.string().optional(),
-    metadata: z.record(z.any()).default({}),
+    metadata: z.record(z.string(), z.any()).default({}),
   })).default([]),
   isRequired: z.boolean().default(true),
 });
@@ -54,7 +56,7 @@ export const CreatePrerequisiteSchema = z.object({
   prerequisiteType: PrerequisiteTypeSchema,
   prerequisiteId: z.string().uuid().optional(),
   skillName: z.string().optional(),
-  assessmentCriteria: z.record(z.any()).optional(),
+  assessmentCriteria: z.record(z.string(), z.any()).optional(),
   isRequired: z.boolean().default(true),
 });
 
@@ -264,7 +266,7 @@ export const MilestoneModel = {
       `DELETE FROM prerequisites WHERE id = $1`,
       [prerequisiteId]
     );
-    return rowCount > 0;
+    return (rowCount ?? 0) > 0;
   },
 
   async validatePrerequisiteChain(milestoneId: string): Promise<{ isValid: boolean; circularDependency?: string }> {

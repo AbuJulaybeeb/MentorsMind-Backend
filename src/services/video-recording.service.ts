@@ -27,7 +27,7 @@ class VideoRecordingService {
   private provider: string;
 
   constructor() {
-    this.provider = recordingConfig.provider;
+    this.provider = recordingConfig.provider || 'default';
   }
 
   /**

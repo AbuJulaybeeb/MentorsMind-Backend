@@ -19,6 +19,7 @@ export interface DataSubjectRequest {
 }
 
 export interface ConsentRecord {
+  id: string;
   userId: string;
   consentType: string;
   granted: boolean;

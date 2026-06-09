@@ -14,7 +14,7 @@ export const TranscriptionController = {
    * Body: { mediaS3Key: string }
    */
   triggerTranscription: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const { id: bookingId } = req.params;
+    const bookingId = req.params.id as string;
     const userId = req.user?.userId;
     const { mediaS3Key } = req.body;
 
@@ -54,7 +54,7 @@ export const TranscriptionController = {
    * Get transcript status and content for a booking.
    */
   getTranscript: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const { id: bookingId } = req.params;
+    const bookingId = req.params.id as string;
     const userId = req.user?.userId;
 
     const { rows } = await pool.query(
@@ -78,7 +78,7 @@ export const TranscriptionController = {
    * Download transcript as PDF or TXT.
    */
   downloadTranscript: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const { id: bookingId } = req.params;
+    const bookingId = req.params.id as string;
     const userId = req.user?.userId;
     const format = (req.query.format as string) ?? 'txt';
 

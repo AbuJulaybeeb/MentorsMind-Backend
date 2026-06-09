@@ -109,7 +109,7 @@ export async function checkAnalyticsHealth(): Promise<{
     
     // Check pipeline health
     const pipelineHealth = await CacheService.get('analytics:health');
-    checks.pipeline = !!pipelineHealth && !pipelineHealth.error;
+    checks.pipeline = !!pipelineHealth && !(pipelineHealth as any).error;
     
   } catch (error) {
     logger.error('Analytics health check failed', { error });

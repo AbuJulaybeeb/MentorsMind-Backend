@@ -106,7 +106,7 @@ router.get(
   "/:id",
   authenticate,
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
-    const assessment = await AssessmentService.getAssessment(req.params.id);
+    const assessment = await AssessmentService.getAssessment(req.params.id as string);
     res.json({ success: true, data: assessment });
   }),
 );
@@ -149,7 +149,7 @@ router.post(
   asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const result = await AssessmentService.submitAssessment({
       user_id: req.user!.userId,
-      assessment_id: req.params.id,
+      assessment_id: req.params.id as string,
       answers: req.body.answers,
     });
     res.json({ success: true, data: result });

@@ -1,4 +1,4 @@
-import { logger } from "../config/logger";
+import { logger } from "../utils/logger";
 
 export interface DeFiPosition {
   userId: string;

@@ -122,33 +122,31 @@ class ElasticsearchService {
     this.ensureConnected();
     
     try {
-      const exists = await this.client.indices.exists({ index: indexName });
+      const exists = await this.client!.indices.exists({ index: indexName });
       
       if (!exists) {
-        await this.client.indices.create({
+        await this.client!.indices.create({
           index: indexName,
-          body: {
-            mappings: mapping,
-            settings: {
-              analysis: {
-                analyzer: {
-                  text_analyzer: {
-                    type: 'custom',
-                    tokenizer: 'standard',
-                    filter: ['lowercase', 'stop', 'snowball'],
-                  },
-                  autocomplete_analyzer: {
-                    type: 'custom',
-                    tokenizer: 'standard',
-                    filter: ['lowercase', 'ngram'],
-                  },
+          mappings: mapping,
+          settings: {
+            analysis: {
+              analyzer: {
+                text_analyzer: {
+                  type: 'custom',
+                  tokenizer: 'standard',
+                  filter: ['lowercase', 'stop', 'snowball'],
                 },
-                filter: {
-                  ngram: {
-                    type: 'ngram',
-                    min_gram: 2,
-                    max_gram: 20,
-                  },
+                autocomplete_analyzer: {
+                  type: 'custom',
+                  tokenizer: 'standard',
+                  filter: ['lowercase', 'ngram'],
+                },
+              },
+              filter: {
+                ngram: {
+                  type: 'ngram',
+                  min_gram: 2,
+                  max_gram: 20,
                 },
               },
             },
@@ -166,9 +164,9 @@ class ElasticsearchService {
     this.ensureConnected();
     
     try {
-      await this.client.indices.delete({ index: indexName });
+      await this.client!.indices.delete({ index: indexName });
       logger.info(`Deleted index: ${indexName}`);
-    } catch (error) {
+    } catch (error: any) {
       if (error.meta?.statusCode !== 404) {
         logger.error(`Failed to delete index ${indexName}:`, error);
         throw error;
@@ -180,10 +178,10 @@ class ElasticsearchService {
     this.ensureConnected();
     
     try {
-      await this.client.index({
+      await this.client!.index({
         index: indexName,
         id,
-        body: document,
+        document: document as any,
         refresh: true,
       });
     } catch (error) {
@@ -196,13 +194,13 @@ class ElasticsearchService {
     this.ensureConnected();
     
     try {
-      const bulkBody = documents.flatMap(({ id, doc }) => [
+      const operations = documents.flatMap(({ id, doc }) => [
         { index: { _index: indexName, _id: id } },
         doc,
       ]);
 
-      await this.client.bulk({
-        body: bulkBody,
+      await this.client!.bulk({
+        operations,
         refresh: true,
       });
       
@@ -217,12 +215,12 @@ class ElasticsearchService {
     this.ensureConnected();
     
     try {
-      await this.client.delete({
+      await this.client!.delete({
         index: indexName,
         id,
         refresh: true,
       });
-    } catch (error) {
+    } catch (error: any) {
       if (error.meta?.statusCode !== 404) {
         logger.error(`Failed to delete document ${id} from ${indexName}:`, error);
         throw error;
@@ -325,41 +323,39 @@ class ElasticsearchService {
     }
 
     try {
-      const response = await this.client.search({
+      const response = await this.client!.search({
         index: config.elasticsearch.indices.mentors,
-        body: {
-          query: {
-            bool: {
-              must: must.length > 0 ? must : undefined,
-              filter: filter.length > 0 ? filter : undefined,
+        query: {
+          bool: {
+            must: must.length > 0 ? must : undefined,
+            filter: filter.length > 0 ? filter : undefined,
+          },
+        },
+        sort: sortConfig,
+        from,
+        size: limit,
+        aggregations: {
+          skills: {
+            terms: { field: 'expertise', size: 20 },
+          },
+          price_ranges: {
+            range: {
+              field: 'hourly_rate',
+              ranges: [
+                { to: 50, key: 'budget' },
+                { from: 50, to: 100, key: 'standard' },
+                { from: 100, key: 'premium' },
+              ],
             },
           },
-          sort: sortConfig,
-          from,
-          size: limit,
-          aggregations: {
-            skills: {
-              terms: { field: 'expertise', size: 20 },
-            },
-            price_ranges: {
-              range: {
-                field: 'hourly_rate',
-                ranges: [
-                  { to: 50, key: 'budget' },
-                  { from: 50, to: 100, key: 'standard' },
-                  { from: 100, key: 'premium' },
-                ],
-              },
-            },
-            rating_ranges: {
-              range: {
-                field: 'average_rating',
-                ranges: [
-                  { from: 4.5, key: 'excellent' },
-                  { from: 4.0, to: 4.5, key: 'good' },
-                  { from: 3.5, to: 4.0, key: 'average' },
-                ],
-              },
+          rating_ranges: {
+            range: {
+              field: 'average_rating',
+              ranges: [
+                { from: 4.5, key: 'excellent' },
+                { from: 4.0, to: 4.5, key: 'good' },
+                { from: 3.5, to: 4.0, key: 'average' },
+              ],
             },
           },
         },
@@ -372,7 +368,7 @@ class ElasticsearchService {
 
       return {
         hits,
-        total: typeof response.hits.total === 'object' ? response.hits.total.value : response.hits.total,
+        total: typeof response.hits.total === 'object' ? response.hits.total.value : response.hits.total!,
         page,
         limit,
         aggregations: response.aggregations,
@@ -387,22 +383,20 @@ class ElasticsearchService {
     this.ensureConnected();
     
     try {
-      const response = await this.client.search({
+      const response = await this.client!.search({
         index: config.elasticsearch.indices.mentors,
-        body: {
-          suggest: {
-            autocomplete: {
-              prefix: query,
-              completion: {
-                field: `${field}.suggest`,
-                size: limit,
-              },
+        suggest: {
+          autocomplete: {
+            prefix: query,
+            completion: {
+              field: `${field}.suggest`,
+              size: limit,
             },
           },
         },
       });
 
-      const suggestions = response.suggest?.autocomplete?.[0]?.options?.map((opt: any) => opt.text) || [];
+      const suggestions = (response.suggest?.autocomplete as any)?.[0]?.options?.map((opt: any) => opt.text) || [];
       return suggestions;
     } catch (error) {
       logger.error('Autocomplete failed:', error);
@@ -414,22 +408,20 @@ class ElasticsearchService {
     this.ensureConnected();
     
     try {
-      const response = await this.client.search({
+      const response = await this.client!.search({
         index: config.elasticsearch.indices.mentors,
-        body: {
-          query: {
-            more_like_this: {
-              fields: ['expertise', 'bio'],
-              like: [{ _index: config.elasticsearch.indices.mentors, _id: mentorId }],
-              min_term_freq: 1,
-              min_doc_freq: 1,
-            },
+        query: {
+          more_like_this: {
+            fields: ['expertise', 'bio'],
+            like: [{ _index: config.elasticsearch.indices.mentors, _id: mentorId }],
+            min_term_freq: 1,
+            min_doc_freq: 1,
           },
-          size: limit,
         },
+        size: limit,
       });
 
-      return response.hits.hits.map((hit: any) => hit._source);
+      return response.hits.hits.map((hit: any) => hit._source as MentorDocument);
     } catch (error) {
       logger.error('Get similar mentors failed:', error);
       return [];
@@ -449,9 +441,9 @@ class ElasticsearchService {
     };
 
     try {
-      await this.client.index({
+      await this.client!.index({
         index: `${config.elasticsearch.indexPrefix}-search-analytics`,
-        body: analyticsDoc,
+        document: analyticsDoc,
       });
     } catch (error) {
       logger.error('Failed to track search analytics:', error);
@@ -462,22 +454,20 @@ class ElasticsearchService {
     this.ensureConnected();
     
     try {
-      const response = await this.client.search({
+      const response = await this.client!.search({
         index: `${config.elasticsearch.indexPrefix}-search-analytics`,
-        body: {
-          size: 0,
-          aggregations: {
-            popular_queries: {
-              terms: {
-                field: 'query.keyword',
-                size: limit,
-              },
+        size: 0,
+        aggregations: {
+          popular_queries: {
+            terms: {
+              field: 'query.keyword',
+              size: limit,
             },
           },
         },
       });
 
-      return response.aggregations?.popular_queries?.buckets?.map((bucket: any) => ({
+      return (response.aggregations?.popular_queries as any)?.buckets?.map((bucket: any) => ({
         query: bucket.key,
         count: bucket.doc_count,
       })) || [];

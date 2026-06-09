@@ -134,7 +134,7 @@ export const AnalyticsCacheService = {
         logger.debug('Cache warmed successfully', { key: config.key });
       } catch (error) {
         results.failed++;
-        logger.warn('Cache warming failed', { key: config.key, error: error.message });
+        logger.warn('Cache warming failed', { key: config.key, error: (error as any).message });
       }
     }
     
@@ -225,7 +225,7 @@ export const AnalyticsCacheService = {
         results.success++;
       } catch (error) {
         results.failed++;
-        logger.warn('Batch cache operation failed', { key: op.key, error: error.message });
+        logger.warn('Batch cache operation failed', { key: op.key, error: (error as any).message });
       }
     }
     
@@ -242,8 +242,8 @@ export const AnalyticsCacheService = {
   ): Promise<T> {
     try {
       // Try cache first
-      const cached = await CacheService.get(key);
-      if (cached) return cached;
+      const cached = await CacheService.get<T>(key);
+      if (cached) return cached as T;
       
       // Try primary generator
       try {
@@ -254,7 +254,7 @@ export const AnalyticsCacheService = {
       } catch (primaryError) {
         logger.warn('Primary data generator failed, trying fallback', { 
           key, 
-          error: primaryError.message 
+          error: (primaryError as any).message 
         });
         
         // Try fallback generator if available

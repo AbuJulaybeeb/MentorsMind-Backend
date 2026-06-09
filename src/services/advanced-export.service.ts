@@ -1,5 +1,5 @@
 import { logger } from "../utils/logger";
-import * as archiver from "archiver";
+import archiver from "archiver";
 
 export interface ExportConfig {
   title: string;
@@ -69,7 +69,7 @@ export const AdvancedExportService = {
         const archive = archiver('zip', { zlib: { level: 9 } });
         const chunks: Buffer[] = [];
 
-        archive.on('data', (chunk) => chunks.push(chunk));
+        archive.on('data', (chunk: Buffer) => chunks.push(chunk));
         archive.on('end', () => resolve(Buffer.concat(chunks)));
         archive.on('error', reject);
 

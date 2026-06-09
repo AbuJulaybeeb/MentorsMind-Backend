@@ -28,7 +28,7 @@ export const MfaController = {
 
       const secret = MfaService.generateSecret();
       const qrCodeUrl = await MfaService.generateQrCode(user.email, secret);
-      const encryptedSecret = MfaService.encryptSecret(secret);
+      const encryptedSecret = await MfaService.encryptSecret(secret);
 
       // Store the secret but don't enable yet
       await pool.query(
@@ -65,7 +65,7 @@ export const MfaController = {
         return res.status(400).json({ success: false, error: 'MFA setup not initiated' });
       }
 
-      const secret = MfaService.decryptSecret(rows[0].mfa_secret);
+      const secret = await MfaService.decryptSecret(rows[0].mfa_secret);
       const isValid = await MfaService.verifyToken(token, secret);
 
       if (!isValid) {
@@ -129,7 +129,7 @@ export const MfaController = {
         return res.status(400).json({ success: false, error: 'MFA is not enabled' });
       }
 
-      const secret = MfaService.decryptSecret(rows[0].mfa_secret);
+      const secret = await MfaService.decryptSecret(rows[0].mfa_secret);
       const isValid = await MfaService.verifyToken(token, secret);
 
       if (!isValid) {
@@ -189,7 +189,7 @@ export const MfaController = {
         return res.status(400).json({ success: false, error: 'MFA not configured' });
       }
 
-      const secret = MfaService.decryptSecret(rows[0].mfa_secret);
+      const secret = await MfaService.decryptSecret(rows[0].mfa_secret);
       const isValid = await MfaService.verifyToken(otpToken, secret);
 
       if (!isValid) {

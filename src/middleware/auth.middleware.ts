@@ -42,7 +42,7 @@ export const authenticate = async (
       alg?: string;
     } | null;
 
-    let decoded: { sub: string; role: string; iat?: number };
+    let decoded: { sub: string; role: string; iat?: number; mfaVerified?: boolean };
 
     if (header?.kid && header?.alg === "RS256") {
       // ── RSA-256 path: look up the public key by kid ──

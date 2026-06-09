@@ -52,7 +52,7 @@ export const VerificationController = {
      * PUT /admin/verifications/:id/approve
      */
     async approve(req: AuthenticatedRequest, res: Response): Promise<void> {
-        const verification = await VerificationService.approve(req.params.id, req.user!.id);
+        const verification = await VerificationService.approve(req.params.id as string, req.user!.id);
         ResponseUtil.success(res, verification, 'Verification approved');
     },
 
@@ -65,7 +65,7 @@ export const VerificationController = {
             ResponseUtil.error(res, 'Rejection reason is required', 400);
             return;
         }
-        const verification = await VerificationService.reject(req.params.id, req.user!.id, reason);
+        const verification = await VerificationService.reject(req.params.id as string, req.user!.id, reason);
         ResponseUtil.success(res, verification, 'Verification rejected');
     },
 
@@ -79,7 +79,7 @@ export const VerificationController = {
             return;
         }
         const verification = await VerificationService.requestMoreInfo(
-            req.params.id,
+            req.params.id as string,
             req.user!.id,
             message,
         );
@@ -91,7 +91,7 @@ export const VerificationController = {
      * Public endpoint — returns latest verification status for a mentor.
      */
     async getVerificationStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
-        const verification = await VerificationService.getStatusByMentorId(req.params.id);
+        const verification = await VerificationService.getStatusByMentorId(req.params.id as string);
         if (!verification) {
             ResponseUtil.notFound(res, 'No verification record found for this mentor');
             return;

@@ -749,7 +749,7 @@ export const CollaborativeLearningService = {
 
   // Private helper methods
 
-  private getTimeFilter(period: 'week' | 'month' | 'quarter'): Date {
+  getTimeFilter(period: 'week' | 'month' | 'quarter'): Date {
     const now = new Date();
     switch (period) {
       case 'week':
@@ -763,7 +763,7 @@ export const CollaborativeLearningService = {
     }
   },
 
-  private calculateLeaderboardScore(data: any): number {
+  calculateLeaderboardScore(data: any): number {
     // Simple scoring algorithm - can be made more sophisticated
     const milestoneScore = parseInt(data.completed_milestones) * 10;
     const progressScore = parseFloat(data.avg_progress) * 0.1;

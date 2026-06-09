@@ -5,7 +5,7 @@ import pool from '../config/database';
 import { BookingModel } from '../models/booking.model';
 import { EscrowModel } from '../models/escrow.model';
 
-const stripeSecret = process.env.STRIPE_SECRET_KEY || config.env.STRIPE_SECRET_KEY;
+const stripeSecret = process.env.STRIPE_SECRET_KEY || config.stripe.secretKey;
 
 export class StripeServiceClass {
   private stripe?: Stripe;

@@ -554,7 +554,7 @@ export const MentorOnboardingService = {
     }
   },
 
-  private transformOnboarding(row: any): MentorOnboarding {
+  transformOnboarding(row: any): MentorOnboarding {
     return {
       id: row.id,
       mentorId: row.mentor_id,

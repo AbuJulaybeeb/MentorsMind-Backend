@@ -1,8 +1,9 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth.middleware';
-import { WebhookService } from '../services/webhook.service';
+import { WebhookService, WebhookRecord } from '../services/webhook.service';
 import { ResponseUtil } from '../utils/response.utils';
 import { asyncHandler } from '../utils/asyncHandler.utils';
+import { logger } from '../utils/logger';
 
 export const WebhooksController = {
   /**
@@ -55,7 +56,7 @@ export const WebhooksController = {
    */
   getOne: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.userId;
-    const webhook = await WebhookService.findById(req.params.id, userId);
+    const webhook = await WebhookService.findById(req.params.id as string, userId);
     if (!webhook) return ResponseUtil.notFound(res, 'Webhook not found');
 
     const { secret_plain: _s, ...safe } = webhook;
@@ -71,7 +72,7 @@ export const WebhooksController = {
     const userId = req.user!.userId;
     const { url, event_types, description, resource_types, filter_statuses } = req.body;
 
-    const updated = await WebhookService.update(req.params.id, userId, {
+    const updated = await WebhookService.update(req.params.id as string, userId, {
       url,
       eventTypes: event_types,
       description,
@@ -90,7 +91,7 @@ export const WebhooksController = {
    */
   remove: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.userId;
-    const deleted = await WebhookService.delete(req.params.id, userId);
+    const deleted = await WebhookService.delete(req.params.id as string, userId);
     if (!deleted) return ResponseUtil.notFound(res, 'Webhook not found');
     return ResponseUtil.success(res, null, 'Webhook deleted');
   }),
@@ -105,14 +106,14 @@ export const WebhooksController = {
     const offset = parseInt((req.query.offset as string) ?? '0', 10);
 
     const { deliveries, total } = await WebhookService.getDeliveries(
-      req.params.id,
+      req.params.id as string,
       userId,
       limit,
       offset,
     );
 
     if (deliveries.length === 0 && offset === 0) {
-      const webhook = await WebhookService.findById(req.params.id, userId);
+      const webhook = await WebhookService.findById(req.params.id as string, userId);
       if (!webhook) return ResponseUtil.notFound(res, 'Webhook not found');
     }
 
@@ -126,7 +127,7 @@ export const WebhooksController = {
   test: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const userId = req.user!.userId;
     try {
-      const result = await WebhookService.sendTest(req.params.id, userId);
+      const result = await WebhookService.sendTest(req.params.id as string, userId);
       return ResponseUtil.success(res, result, 'Test event queued for delivery');
     } catch (err: unknown) {
       const e = err as { statusCode?: number; message: string };
@@ -143,7 +144,7 @@ export const WebhooksController = {
     const { grace_period_hours } = req.body;
 
     const webhook = await WebhookService.rotateApiKey(
-      req.params.id,
+      req.params.id as string,
       userId,
       grace_period_hours ? parseInt(grace_period_hours, 10) : 24
     );

@@ -306,7 +306,7 @@ export const LearningAnalyticsService = {
   },
 
   // Helper methods
-  private getTimeFilter(timeframe: string): Date {
+  getTimeFilter(timeframe: string): Date {
     const now = new Date();
     switch (timeframe) {
       case 'week': return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -317,7 +317,7 @@ export const LearningAnalyticsService = {
     }
   },
 
-  private getIntervalForTimeframe(timeframe: string): string {
+  getIntervalForTimeframe(timeframe: string): string {
     switch (timeframe) {
       case 'week': return 'day';
       case 'month': return 'day';
@@ -327,7 +327,7 @@ export const LearningAnalyticsService = {
     }
   },
 
-  private calculateDifficultyRating(data: any): number {
+  calculateDifficultyRating(data: any): number {
     const completionRate = parseFloat(data.completion_rate) || 0;
     const avgTime = parseFloat(data.avg_time_minutes) || 0;
     
@@ -734,7 +734,7 @@ export const LearningAnalyticsService = {
   },
 
   // Helper methods for analytics calculations
-  private async calculateConsistencyScore(studentId: string, pathId?: string): Promise<number> {
+  async calculateConsistencyScore(studentId: string, pathId?: string): Promise<number> {
     const pathCondition = pathId ? 'AND pe.learning_path_id = $2' : '';
     const queryParams = pathId ? [studentId, pathId] : [studentId];
 
@@ -771,7 +771,7 @@ export const LearningAnalyticsService = {
     return Math.min((streak / 30) * 100, 100);
   },
 
-  private async calculateCollaborationScore(studentId: string): Promise<number> {
+  async calculateCollaborationScore(studentId: string): Promise<number> {
     const { rows } = await pool.query(
       `SELECT 
          COUNT(DISTINCT df.id) as forum_posts,
@@ -794,7 +794,7 @@ export const LearningAnalyticsService = {
     return Math.min(score, 100);
   },
 
-  private determineLearningStyle(sessionEffectiveness: number, velocity: number): StudentLearningProfile['learningStyle'] {
+  determineLearningStyle(sessionEffectiveness: number, velocity: number): StudentLearningProfile['learningStyle'] {
     // Simplified heuristic - in production, this would use ML models
     if (sessionEffectiveness > 0.8 && velocity > 1.5) return 'visual';
     if (sessionEffectiveness > 0.7) return 'auditory';
@@ -803,7 +803,7 @@ export const LearningAnalyticsService = {
     return 'mixed';
   },
 
-  private async identifyStrengthsAndWeaknesses(
+  async identifyStrengthsAndWeaknesses(
     studentId: string,
     pathId?: string
   ): Promise<{ strongAreas: string[]; improvementAreas: string[] }> {
@@ -814,7 +814,7 @@ export const LearningAnalyticsService = {
     };
   },
 
-  private calculateSuccessRate(
+  calculateSuccessRate(
     velocity: number,
     engagement: number,
     consistency: number,
@@ -833,7 +833,7 @@ export const LearningAnalyticsService = {
     return Math.min(Math.max(score, 0), 100);
   },
 
-  private generateLearningRecommendations(
+  generateLearningRecommendations(
     velocity: number,
     engagement: number,
     consistency: number,
@@ -857,7 +857,7 @@ export const LearningAnalyticsService = {
     return recommendations;
   },
 
-  private identifyRiskFactors(profile: StudentLearningProfile, enrollment: any): RiskFactor[] {
+  identifyRiskFactors(profile: StudentLearningProfile, enrollment: any): RiskFactor[] {
     const riskFactors: RiskFactor[] = [];
 
     if (profile.engagementScore < 40) {
@@ -890,7 +890,7 @@ export const LearningAnalyticsService = {
     return riskFactors;
   },
 
-  private generateInterventions(riskFactors: RiskFactor[], profile: StudentLearningProfile): string[] {
+  generateInterventions(riskFactors: RiskFactor[], profile: StudentLearningProfile): string[] {
     const interventions: string[] = [];
 
     for (const risk of riskFactors) {
@@ -908,7 +908,7 @@ export const LearningAnalyticsService = {
     return interventions;
   },
 
-  private async generateOptimalNextSteps(
+  async generateOptimalNextSteps(
     studentId: string,
     pathId: string,
     profile: StudentLearningProfile
@@ -942,7 +942,7 @@ export const LearningAnalyticsService = {
     return steps;
   },
 
-  private async getStudentMetrics(studentId: string, pathId: string): Promise<StudentMetrics> {
+  async getStudentMetrics(studentId: string, pathId: string): Promise<StudentMetrics> {
     const { rows } = await pool.query(
       `SELECT 
          pe.progress_percentage,
@@ -973,7 +973,7 @@ export const LearningAnalyticsService = {
     };
   },
 
-  private async getPeerAverages(pathId: string, excludeStudentId: string): Promise<StudentMetrics> {
+  async getPeerAverages(pathId: string, excludeStudentId: string): Promise<StudentMetrics> {
     const { rows } = await pool.query(
       `SELECT 
          AVG(pe.progress_percentage) as avg_progress,
@@ -1000,7 +1000,7 @@ export const LearningAnalyticsService = {
     };
   },
 
-  private async calculatePercentile(studentId: string, pathId: string): Promise<number> {
+  async calculatePercentile(studentId: string, pathId: string): Promise<number> {
     const { rows } = await pool.query(
       `WITH student_progress AS (
          SELECT progress_percentage

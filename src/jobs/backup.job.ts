@@ -39,8 +39,8 @@ class BackupJob {
           await BackupService.verifyBackup(result.id);
         } else {
           logError(
-            "Daily full backup failed",
-            new Error(result.error ?? "unknown"),
+            new Error(`Daily full backup failed: ${result.error ?? "unknown"}`),
+            "high",
             {
               jobId: result.id,
             },
@@ -66,9 +66,13 @@ class BackupJob {
         logInfo("Running scheduled WAL backup");
         const result = await BackupService.runWALBackup();
         if (result.status === "failed") {
-          logError("WAL backup failed", new Error(result.error ?? "unknown"), {
-            jobId: result.id,
-          });
+          logError(
+            new Error(`WAL backup failed: ${result.error ?? "unknown"}`),
+            "high",
+            {
+              jobId: result.id,
+            },
+          );
         }
       });
 

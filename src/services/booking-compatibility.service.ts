@@ -2,6 +2,16 @@ import pool from "../config/database";
 import { logger } from "../utils/logger.utils";
 import { BookingsService } from "./bookings.service";
 import { ContextualBookingService } from "./contextual-booking.service";
+import { SessionMilestoneService } from "./session-milestone.service";
+
+export interface LegacyBookingMigration {
+  bookingId: string;
+  mentorId: string;
+  studentId: string;
+  suggestedMilestone?: string;
+  migrationStatus: "pending" | "completed" | "failed";
+  reason?: string;
+}
 
 export interface HybridModeConfig {
   mentorId: string;
@@ -44,7 +54,7 @@ export const BookingCompatibilityService = {
       ];
 
       for (const method of methods) {
-        if (typeof BookingsService[method] !== "function") {
+        if (typeof (BookingsService as any)[method] !== "function") {
           throw new Error(`BookingsService.${method} is not available`);
         }
       }
@@ -313,7 +323,7 @@ export const BookingCompatibilityService = {
              AND lp.is_published = true
              AND (m.title ILIKE ANY($2) OR lp.title ILIKE ANY($2))
            LIMIT 1`,
-          [mentorId, topics.map((topic) => `%${topic}%`)],
+          [mentorId, topics.map((topic: string) => `%${topic}%`)],
         );
 
         if (milestoneRows.length > 0) {
@@ -462,7 +472,7 @@ export const BookingCompatibilityService = {
         "getUserBookings",
       ];
       for (const method of bookingMethods) {
-        if (typeof BookingsService[method] !== "function") {
+        if (typeof (BookingsService as any)[method] !== "function") {
           bookingSystemIntact = false;
           issues.push(`BookingsService.${method} is not available`);
         }
@@ -474,7 +484,7 @@ export const BookingCompatibilityService = {
         "getSessionContext",
       ];
       for (const method of integrationMethods) {
-        if (typeof SessionMilestoneService[method] !== "function") {
+        if (typeof (SessionMilestoneService as any)[method] !== "function") {
           learningPathIntegrationWorking = false;
           issues.push(`SessionMilestoneService.${method} is not available`);
         }

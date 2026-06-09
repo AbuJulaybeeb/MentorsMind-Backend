@@ -94,7 +94,7 @@ export const SubscriptionController = {
       return;
     }
 
-    const { id } = req.params;
+    const id = req.params.id as string;
     try {
       const sub = await SubscriptionService.cancel(userId, id);
       ResponseUtil.success(res, sub, "Subscription cancelled");

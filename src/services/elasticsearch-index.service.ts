@@ -207,7 +207,7 @@ class ElasticsearchIndexService {
       }));
 
       await elasticsearchService.bulkIndex(
-        elasticsearchService['config'].elasticsearch.indices.mentors,
+        config.elasticsearch.indices.mentors,
         documents
       );
 
@@ -372,7 +372,7 @@ class ElasticsearchIndexService {
       const mentor = result.rows[0];
 
       await elasticsearchService.indexDocument(
-        elasticsearchService['config'].elasticsearch.indices.mentors,
+        config.elasticsearch.indices.mentors,
         mentorId,
         {
           id: mentor.id,
@@ -438,7 +438,7 @@ class ElasticsearchIndexService {
       const session = result.rows[0];
 
       await elasticsearchService.indexDocument(
-        elasticsearchService['config'].elasticsearch.indices.sessions,
+        config.elasticsearch.indices.sessions,
         sessionId,
         {
           id: session.id,

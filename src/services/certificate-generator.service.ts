@@ -70,7 +70,7 @@ export interface BlockchainVerification {
   verificationData: Record<string, any>;
 }
 
-export const CertificateGeneratorService = {
+export class CertificateGeneratorService {
   /**
    * Generate certificate for milestone completion
    */
@@ -186,7 +186,7 @@ export const CertificateGeneratorService = {
     });
 
     return certificate;
-  },
+  }
 
   /**
    * Generate certificate for learning path completion
@@ -321,7 +321,7 @@ export const CertificateGeneratorService = {
     });
 
     return certificate;
-  },
+  }
 
   /**
    * Verify certificate authenticity
@@ -406,7 +406,7 @@ export const CertificateGeneratorService = {
     await CacheService.set(cacheKey, result, CacheTTL.long);
 
     return result;
-  },
+  }
 
   /**
    * Get certificates for a user
@@ -439,7 +439,7 @@ export const CertificateGeneratorService = {
     const { rows } = await pool.query(query, params);
 
     return rows;
-  },
+  }
 
   /**
    * Revoke a certificate
@@ -491,7 +491,7 @@ export const CertificateGeneratorService = {
       reason,
       revokedBy
     });
-  },
+  }
 
   /**
    * Get certificate templates
@@ -555,7 +555,7 @@ export const CertificateGeneratorService = {
     await CacheService.set(cacheKey, templates, CacheTTL.veryLong);
 
     return templates;
-  },
+  }
 
   /**
    * Generate certificate PDF
@@ -577,7 +577,7 @@ export const CertificateGeneratorService = {
     const pdfBuffer = await this.createPDFFromTemplate(certificateData);
 
     return pdfBuffer;
-  },
+  }
 
   // Private helper methods
 
@@ -585,12 +585,12 @@ export const CertificateGeneratorService = {
     const timestamp = Date.now().toString(36);
     const random = Math.random().toString(36).substring(2, 8);
     return `CERT-${timestamp}-${random}`.toUpperCase();
-  },
+  }
 
   private generateVerificationHash(studentId: string, targetId: string, certificateNumber: string): string {
     const data = `${studentId}:${targetId}:${certificateNumber}:${Date.now()}`;
     return crypto.createHash('sha256').update(data).digest('hex');
-  },
+  }
 
   private getDefaultDesign(): CertificateDesign {
     return {
@@ -604,7 +604,7 @@ export const CertificateGeneratorService = {
       includeQRCode: true,
       includeSignature: true
     };
-  },
+  }
 
   private async recordOnBlockchain(certificate: CompletionCertificate): Promise<{ txHash: string } | null> {
     // Placeholder for blockchain integration
@@ -629,7 +629,7 @@ export const CertificateGeneratorService = {
       logger.error("Blockchain recording failed", { certificateId: certificate.id, error });
       throw error;
     }
-  },
+  }
 
   private async verifyBlockchainRecord(txHash: string): Promise<BlockchainVerification> {
     // Placeholder for blockchain verification
@@ -645,7 +645,7 @@ export const CertificateGeneratorService = {
         confirmations: 12
       }
     };
-  },
+  }
 
   private async createPDFFromTemplate(certificateData: CertificateData): Promise<Buffer> {
     // Placeholder for PDF generation
@@ -673,4 +673,6 @@ export const CertificateGeneratorService = {
     // Convert to buffer (placeholder)
     return Buffer.from(pdfContent, 'utf-8');
   }
-};
+}
+
+export const certificateGeneratorService = new CertificateGeneratorService();

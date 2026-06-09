@@ -90,6 +90,23 @@ export const NotificationAnalyticsModel = {
   },
 
   /**
+   * Increment a specific metric for a date, type, and channel
+   */
+  async incrementMetric(
+    date: Date,
+    notification_type: string,
+    channel: string,
+    metric: 'total_sent' | 'total_delivered' | 'total_failed' | 'total_opened' | 'total_clicked'
+  ): Promise<NotificationAnalyticsRecord | null> {
+    return this.upsert({
+      date,
+      notification_type,
+      channel,
+      [metric]: 1
+    });
+  },
+
+  /**
    * Get aggregated stats for a period
    */
   async getStats(filters: AnalyticsFilters): Promise<AnalyticsStats> {

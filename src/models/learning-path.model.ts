@@ -321,6 +321,16 @@ export interface MilestoneProgressRecord {
   updated_at: Date;
 }
 
+export interface MilestoneCompletion {
+  milestoneId: string;
+  enrollmentId: string;
+  completedAt: string;
+  progressPercentage?: number;
+  nextMilestone?: any;
+  certificateGenerated?: boolean;
+  pathCompleted: boolean;
+}
+
 // Validation schemas for API requests
 export const CreateLearningPathSchema = z.object({
   title: z.string().min(1).max(255),
@@ -357,7 +367,7 @@ export const CreateLearningPathSchema = z.object({
               title: z.string(),
               url: z.string().url().optional(),
               content: z.string().optional(),
-              metadata: z.record(z.any()).default({}),
+              metadata: z.record(z.string(), z.any()).default({}),
             }),
           )
           .default([]),
@@ -380,7 +390,7 @@ export const UpdateEnrollmentStatusSchema = z.object({
 });
 
 export const CompleteMilestoneSchema = z.object({
-  completionData: z.record(z.any()).optional(),
+  completionData: z.record(z.string(), z.any()).optional(),
   notes: z.string().optional(),
 });
 

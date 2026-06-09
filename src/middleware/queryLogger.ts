@@ -26,7 +26,7 @@ export async function trackAndLogQuery(
       let queryPlan = 'Unable to fetch plan';
       try {
         const explainResult = await client.query(`EXPLAIN ${sql}`, params);
-        queryPlan = explainResult.rows.map(row => row['QUERY PLAN']).join('\n');
+        queryPlan = explainResult.rows.map((row: any) => row['QUERY PLAN']).join('\n');
       } catch (explainError) {
         logger.error('Failed to fetch query plan', { error: explainError });
       }

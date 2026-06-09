@@ -21,6 +21,7 @@ export interface UserRecord {
   pii_encryption_version: string | null;
   created_at: Date;
   updated_at: Date;
+  language: string;
 }
 
 export interface PublicUserRecord {
@@ -41,12 +42,13 @@ export interface UpdateUserPayload {
   dateOfBirth?: string | null;
   governmentIdNumber?: string | null;
   bankAccountDetails?: string | null;
+  language?: string;
 }
 
 const PRIVATE_COLUMNS = `id, email, role, user_tier, first_name, last_name, bio, avatar_url, is_active,
    notification_preferences, phone_number_encrypted, date_of_birth_encrypted,
    government_id_number_encrypted, bank_account_details_encrypted,
-   pii_encryption_version, created_at, updated_at`;
+   pii_encryption_version, created_at, updated_at, language`;
 
 const PUBLIC_COLUMNS = "id, role, first_name, last_name, bio, avatar_url";
 
@@ -111,6 +113,10 @@ export const UsersService = {
     if (payload.notificationPreferences !== undefined) {
       fields.push(`notification_preferences = $${idx++}`);
       values.push(JSON.stringify(payload.notificationPreferences));
+    }
+    if (payload.language !== undefined) {
+      fields.push(`language = $${idx++}`);
+      values.push(payload.language);
     }
     if (payload.phoneNumber !== undefined) {
       fields.push(`phone_number_encrypted = $${idx++}`);

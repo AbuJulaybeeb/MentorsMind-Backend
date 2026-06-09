@@ -10,7 +10,7 @@ export class EmailI18nService {
    */
   static getSubject(key: string, language: SupportedLanguage = 'en', options?: any): string {
     const t = getT(language);
-    return t(`emails.subject.${key}`, options);
+    return t(`emails.subject.${key}`, options) as string;
   }
 
   /**
@@ -38,7 +38,7 @@ export class EmailI18nService {
    */
   static getContent(key: string, language: SupportedLanguage = 'en', options?: any): string {
     const t = getT(language);
-    return t(`emails.${key}`, options);
+    return t(`emails.${key}`, options) as string;
   }
 
   /**

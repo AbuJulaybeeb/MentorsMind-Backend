@@ -5,6 +5,7 @@ export type DisputeStatus =
   | "investigating"
   | "mediation"
   | "resolved"
+  | "dismissed"
   | "escalated";
 export type DisputeType = "payment" | "quality" | "conduct" | "cancellation";
 

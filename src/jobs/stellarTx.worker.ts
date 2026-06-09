@@ -1,4 +1,5 @@
 import { Worker, Job } from "bullmq";
+import { Asset } from "@stellar/stellar-sdk";
 import {
   redisConnection,
   CONCURRENCY,

@@ -141,7 +141,7 @@ router.put(
   "/users/:id/status",
   auditLogMiddleware({
     action: AuditAction.ADMIN_ACTION,
-    getEntityDetails: (req) => ({ type: "USER", id: req.params.id }),
+    getEntityDetails: (req) => ({ type: "USER", id: req.params.id as string }),
   }),
   asyncHandler(AdminController.updateUserStatus),
 );
@@ -174,7 +174,7 @@ router.put(
   "/users/:id/tier",
   auditLogMiddleware({
     action: AuditAction.ADMIN_ACTION,
-    getEntityDetails: (req) => ({ type: "USER", id: req.params.id }),
+    getEntityDetails: (req) => ({ type: "USER", id: req.params.id as string }),
   }),
   asyncHandler(AdminController.updateUserTier),
 );
@@ -218,7 +218,7 @@ router.put(
   "/users/:id/suspend",
   auditLogMiddleware({
     action: AuditAction.ADMIN_ACTION,
-    getEntityDetails: (req) => ({ type: "USER", id: req.params.id }),
+    getEntityDetails: (req) => ({ type: "USER", id: req.params.id as string }),
   }),
   asyncHandler(AdminController.suspendUser),
 );
@@ -257,7 +257,7 @@ router.put(
   "/users/:id/ban",
   auditLogMiddleware({
     action: AuditAction.ADMIN_ACTION,
-    getEntityDetails: (req) => ({ type: "USER", id: req.params.id }),
+    getEntityDetails: (req) => ({ type: "USER", id: req.params.id as string }),
   }),
   asyncHandler(AdminController.banUser),
 );
@@ -282,7 +282,7 @@ router.put(
   "/users/:id/unsuspend",
   auditLogMiddleware({
     action: AuditAction.ADMIN_ACTION,
-    getEntityDetails: (req) => ({ type: "USER", id: req.params.id }),
+    getEntityDetails: (req) => ({ type: "USER", id: req.params.id as string }),
   }),
   asyncHandler(AdminController.unsuspendUser),
 );
@@ -307,7 +307,7 @@ router.post(
   "/users/:id/unlock",
   auditLogMiddleware({
     action: AuditAction.ADMIN_ACTION,
-    getEntityDetails: (req) => ({ type: "USER", id: req.params.id }),
+    getEntityDetails: (req) => ({ type: "USER", id: req.params.id as string }),
   }),
   asyncHandler(AdminController.unlockUser),
 );
@@ -509,7 +509,7 @@ router.post(
   "/disputes/:id/resolve",
   auditLogMiddleware({
     action: AuditAction.ADMIN_ACTION,
-    getEntityDetails: (req) => ({ type: "DISPUTE", id: req.params.id }),
+    getEntityDetails: (req) => ({ type: "DISPUTE", id: req.params.id as string }),
   }),
   asyncHandler(AdminController.resolveDispute),
 );
@@ -1247,7 +1247,7 @@ router.post(
     action: AuditAction.ADMIN_ACTION,
     getEntityDetails: (req) => ({
       type: "WEBHOOK_DELIVERY",
-      id: req.params.deliveryId,
+      id: req.params.deliveryId as string,
     }),
   }),
   asyncHandler(AdminController.retryWebhookDelivery),

@@ -287,7 +287,7 @@ export const InsightGeneratorService = {
     const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
     const stdDev = Math.sqrt(variance);
     
-    const anomalies = [];
+    const anomalies: any[] = [];
     
     values.forEach((value, index) => {
       const deviation = (value - mean) / stdDev;

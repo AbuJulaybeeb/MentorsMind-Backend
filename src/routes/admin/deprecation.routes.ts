@@ -69,7 +69,7 @@ router.get('/deprecations/sunset', (req: Request, res: Response) => {
  * Get details for a specific deprecated endpoint
  */
 router.get('/deprecations/:endpoint', (req: Request, res: Response) => {
-  const endpoint = req.params.endpoint;
+  const endpoint = req.params.endpoint as string;
   const deprecation = deprecationManager.getDeprecation(endpoint);
 
   if (!deprecation) {
@@ -150,7 +150,7 @@ router.post('/deprecations', (req: Request, res: Response) => {
  * Remove a deprecation (after sunset date)
  */
 router.delete('/deprecations/:endpoint', (req: Request, res: Response) => {
-  const endpoint = req.params.endpoint;
+  const endpoint = req.params.endpoint as string;
   const deprecation = deprecationManager.getDeprecation(endpoint);
 
   if (!deprecation) {

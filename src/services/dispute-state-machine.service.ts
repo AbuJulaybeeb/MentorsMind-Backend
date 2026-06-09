@@ -2,11 +2,12 @@ import { DisputeStatus } from "../models/dispute.model";
 
 export class DisputeStateMachine {
   private static validTransitions: Record<DisputeStatus, DisputeStatus[]> = {
-    open: ["investigating", "resolved"],
-    investigating: ["mediation", "escalated", "resolved"],
-    mediation: ["escalated", "resolved"],
-    escalated: ["resolved"],
+    open: ["investigating", "resolved", "dismissed"],
+    investigating: ["mediation", "escalated", "resolved", "dismissed"],
+    mediation: ["escalated", "resolved", "dismissed"],
+    escalated: ["resolved", "dismissed"],
     resolved: [], // Terminal state
+    dismissed: [], // Terminal state
   };
 
   /**

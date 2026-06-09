@@ -1,6 +1,7 @@
 import pool from "../config/database";
 import { SocketService } from "./socket.service";
 import { logger } from "../utils/logger.utils";
+import { NotificationsModel } from "../models";
 
 export type InAppNotificationType =
   | "booking_confirmed"

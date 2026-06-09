@@ -19,6 +19,7 @@ import {
 } from "./notification.service";
 import { NotificationType } from "../models/notifications.model";
 import { SessionSummaryModel } from "../models/session-summary.model";
+import { MentorsService } from "./mentors.service";
 
 export interface CreateBookingData {
   menteeId: string;
@@ -180,7 +181,7 @@ export const BookingsService = {
 
   async getUserBookings(
     userId: string,
-    filters?: { status?: string; page?: number; limit?: number },
+    filters?: { status?: string; cursor?: string; page?: number; limit?: number },
   ): Promise<{ bookings: BookingRecord[]; total: number }> {
     const cacheKey = CacheKeys.sessionList(userId);
 

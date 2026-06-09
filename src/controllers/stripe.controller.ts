@@ -32,7 +32,7 @@ export const StripeController = {
   },
 
   async webhook(req: Request, res: Response) {
-    const stripeSigningSecret = config.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET;
+    const stripeSigningSecret = process.env.STRIPE_WEBHOOK_SECRET;
     try {
       // Need raw body to verify signature
       const raw = (req as any).rawBody || (await rawBody(req));

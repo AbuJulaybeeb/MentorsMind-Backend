@@ -242,7 +242,7 @@ export const CalendarSyncService = {
       const params = new URLSearchParams({
         client_id: process.env.OUTLOOK_CLIENT_ID ?? "",
         client_secret: process.env.OUTLOOK_CLIENT_SECRET ?? "",
-        refresh_token: refreshToken,
+        refresh_token: refreshToken || "",
         grant_type: "refresh_token",
       });
       const resp = await fetch(`${MS_AUTH_BASE}/token`, {
@@ -355,8 +355,8 @@ export const CalendarSyncService = {
     const result = await caldavRequest(
       eventUrl,
       "PUT",
-      appleId,
-      appPassword,
+      appleId || "",
+      appPassword || "",
       icsBody,
     );
     return result.status === 201 || result.status === 204;

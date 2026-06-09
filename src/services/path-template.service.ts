@@ -349,7 +349,7 @@ export const PathTemplateService = {
     // Invalidate template cache
     await this.invalidateTemplateCache();
 
-    return this.getTemplate(templateId)!;
+    return (await this.getTemplate(templateId)) as PathTemplate;
   },
 
   /**
@@ -368,13 +368,14 @@ export const PathTemplateService = {
     const { LearningPathService } = await import("./learning-path.service");
 
     // Prepare learning path data
-    const pathData: CreateLearningPathData = {
+    const pathData: any = {
       title: customization.customizations.title || template.title,
       description: customization.customizations.description || template.description,
       estimatedDurationHours: customization.customizations.estimatedDurationHours || template.estimatedDurationHours,
       difficultyLevel: template.difficultyLevel,
       totalPrice: customization.customizations.totalPrice,
       pricingModel: customization.customizations.pricingModel || 'total',
+      currency: 'XLM',
       tags: template.tags,
       milestones: []
     };
@@ -386,10 +387,9 @@ export const PathTemplateService = {
         c => c.index === i
       );
 
-      const milestoneData: CreateMilestoneData = {
+      const milestoneData: any = {
         title: customMilestone?.title || templateMilestone.title,
         description: customMilestone?.description || templateMilestone.description,
-        orderIndex: templateMilestone.orderIndex,
         estimatedDurationHours: customMilestone?.estimatedDurationHours || templateMilestone.estimatedDurationHours,
         price: customMilestone?.price,
         learningObjectives: customMilestone?.learningObjectives || templateMilestone.learningObjectives,
@@ -402,7 +402,7 @@ export const PathTemplateService = {
     }
 
     // Create the customized learning path
-    const learningPath = await LearningPathService.createLearningPath(mentorId, pathData);
+    const learningPathRecord = await LearningPathService.createPath(mentorId, pathData);
 
     // Update template usage count
     await pool.query(
@@ -417,19 +417,40 @@ export const PathTemplateService = {
       `UPDATE learning_paths 
        SET template_id = $1 
        WHERE id = $2`,
-      [customization.templateId, learningPath.id]
+      [customization.templateId, learningPathRecord.id]
     );
 
     logger.info("Template customized and learning path created", {
       templateId: customization.templateId,
-      newPathId: learningPath.id,
+      newPathId: learningPathRecord.id,
       mentorId
     });
 
     // Invalidate template cache
     await this.invalidateTemplateCache();
 
-    return learningPath;
+    // Map record to interface
+    return {
+      id: learningPathRecord.id,
+      mentorId: learningPathRecord.mentor_id,
+      title: learningPathRecord.title,
+      description: learningPathRecord.description,
+      estimatedDurationHours: learningPathRecord.estimated_duration_hours,
+      difficultyLevel: learningPathRecord.difficulty_level as any,
+      pricingModel: learningPathRecord.pricing_model as any,
+      totalPrice: learningPathRecord.total_price,
+      currency: learningPathRecord.currency,
+      tags: learningPathRecord.tags,
+      isPublished: learningPathRecord.is_published,
+      isTemplate: learningPathRecord.is_template,
+      enrolledCount: learningPathRecord.enrolled_count,
+      completionCount: learningPathRecord.completion_count,
+      rating: learningPathRecord.rating,
+      reviewCount: learningPathRecord.review_count,
+      metadata: learningPathRecord.metadata,
+      createdAt: learningPathRecord.created_at.toISOString(),
+      updatedAt: learningPathRecord.updated_at.toISOString()
+    };
   },
 
   /**
@@ -523,7 +544,7 @@ export const PathTemplateService = {
       updates: Object.keys(updates)
     });
 
-    return this.getTemplate(templateId)!;
+    return (await this.getTemplate(templateId)) as PathTemplate;
   },
 
   /**

@@ -11,6 +11,7 @@ import { logger } from '../utils/logger';
 export interface ExportJobData {
   userId: string;
   jobId: string;
+  requestId?: string;
   type?: 'earnings-export' | 'data-export';
   format?: string;
   period?: string;
@@ -29,7 +30,7 @@ export const exportWorker = new Worker(
 
     if (type === 'earnings-export') {
       const { format, period, startDate, endDate } = job.data;
-      await EarningsReportService.processQueuedExport(jobId, userId, format, period, startDate, endDate);
+      await EarningsReportService.processQueuedExport(jobId, userId, (format ?? 'csv') as 'csv' | 'pdf', period || '30d', startDate, endDate);
     } else {
       // Regular data export
       await ExportService.processExport(userId, jobId);

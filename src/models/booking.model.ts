@@ -15,6 +15,9 @@ export interface BookingRecord {
   stellar_tx_hash: string | null;
   transaction_id: string | null;
   cancellation_reason: string | null;
+  session_id?: string;
+  meeting_id?: string;
+  meeting_url?: string;
   created_at: Date;
   updated_at: Date;
 }
