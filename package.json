@@ -10,7 +10,7 @@
     "build:check": "tsc -p tsconfig.build.json --noEmit",
     "start": "node dist/bootstrap.js",
     "start:worker": "node dist/worker-bootstrap.js",
-    "lint": "eslint .",
+    "lint": "node --max-old-space-size=4096 node_modules/eslint/bin/eslint.js .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "seed": "ts-node --project tsconfig.seed.json database/seeds/index.ts",
