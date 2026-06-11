@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS onboarding_wizard_steps (
   step_order        INTEGER NOT NULL,
   is_required       BOOLEAN NOT NULL DEFAULT true,
   estimated_minutes INTEGER,
-  depends_on        TEXT[] DEFAULT '[]',                  -- step keys that must be completed first
+  depends_on        TEXT[] DEFAULT '{}',                  -- step keys that must be completed first
   metadata          JSONB DEFAULT '{}',
   is_active         BOOLEAN NOT NULL DEFAULT true,
   created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS onboarding_analytics (
 
 -- Default onboarding wizard steps
 INSERT INTO onboarding_wizard_steps (step_key, title, description, category, step_order, is_required, estimated_minutes, depends_on) VALUES
-  ('profile_basics', 'Basic Profile', 'Add your name, bio, and profile photo', 'profile', 1, true, 10, '[]'),
+  ('profile_basics', 'Basic Profile', 'Add your name, bio, and profile photo', 'profile', 1, true, 10, '{}'),
   ('expertise', 'Define Expertise', 'Select your skills and areas of expertise', 'profile', 2, true, 15, '{profile_basics}'),
   ('education', 'Education & Credentials', 'Add your educational background', 'profile', 3, false, 10, '{expertise}'),
   ('identity_verification', 'Identity Verification', 'Upload government-issued ID for verification', 'verification', 4, true, 20, '{expertise}'),
@@ -90,7 +90,8 @@ INSERT INTO onboarding_wizard_steps (step_key, title, description, category, ste
   ('payment_setup', 'Payment Setup', 'Connect your Stellar wallet for payouts', 'setup', 10, true, 10, '{schedule_setup}'),
   ('policies_agreement', 'Accept Policies', 'Review and accept platform terms and policies', 'setup', 11, true, 5, '{payment_setup}'),
   ('practice_session', 'Practice Session', 'Complete a practice mentoring session', 'training', 12, true, 60, '{policies_agreement}'),
-  ('profile_review', 'Profile Review', 'Submit for admin review and approval', 'verification', 13, true, 5, '{practice_session}');
+  ('profile_review', 'Profile Review', 'Submit for admin review and approval', 'verification', 13, true, 5, '{practice_session}')
+ON CONFLICT (step_key) DO NOTHING;
 
 -- Default onboarding email sequences
 INSERT INTO onboarding_email_sequences (trigger_step, subject, template_name, delay_minutes) VALUES
@@ -100,7 +101,8 @@ INSERT INTO onboarding_email_sequences (trigger_step, subject, template_name, de
   ('skill_assessment', 'Complete Your Skill Assessment', 'onboarding-skill-assessment', 1440),
   ('pricing_setup', 'Set Your Rates and Start Earning', 'onboarding-pricing', 0),
   ('profile_review', 'Your Profile Is Under Review', 'onboarding-under-review', 0),
-  ('profile_review', 'Congratulations! You''re Now a Mentor', 'onboarding-approved', 0);
+  ('profile_review', 'Congratulations! You''re Now a Mentor', 'onboarding-approved', 0)
+ON CONFLICT DO NOTHING;
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_mentor_profile_scores_mentor ON mentor_profile_scores(mentor_id);

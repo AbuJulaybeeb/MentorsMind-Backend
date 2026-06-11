@@ -11,12 +11,16 @@ export async function getRedisClients(): Promise<{
   pub: Redis;
   CHANNEL: string;
 }> {
+  const url = redisConfig.url!;
+  const isTls = url.startsWith('rediss://');
+  const tlsOptions = isTls ? { tls: { rejectUnauthorized: false } } : {};
+
   if (!sub) {
-    sub = new Redis(redisConfig.url!, { lazyConnect: true });
+    sub = new Redis(url, { lazyConnect: true, ...tlsOptions });
     await sub.connect();
   }
   if (!pub) {
-    pub = new Redis(redisConfig.url!, { lazyConnect: true });
+    pub = new Redis(url, { lazyConnect: true, ...tlsOptions });
     await pub.connect();
   }
   return { sub, pub, CHANNEL };

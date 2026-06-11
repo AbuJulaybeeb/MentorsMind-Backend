@@ -22,12 +22,12 @@ CREATE INDEX IF NOT EXISTS idx_reviews_reviewer_created_at_desc
 CREATE INDEX IF NOT EXISTS idx_reviews_reviewee_created_at_desc
   ON reviews(reviewee_id, created_at DESC);
 
--- Bookings are queried by mentee_id/mentor_id and filtered by status and sorted by scheduled_at.
+-- Bookings are queried by mentee_id/mentor_id and filtered by status and sorted by scheduled_start.
 CREATE INDEX IF NOT EXISTS idx_bookings_mentee_status_scheduled_at_desc
-  ON bookings(mentee_id, status, scheduled_at DESC);
+  ON bookings(mentee_id, status, scheduled_start DESC);
 
 CREATE INDEX IF NOT EXISTS idx_bookings_mentor_status_scheduled_at_desc
-  ON bookings(mentor_id, status, scheduled_at DESC);
+  ON bookings(mentor_id, status, scheduled_start DESC);
 
 -- Escrow transactions table (if exists) is frequently filtered by buyer/seller.
 -- Use IF EXISTS to avoid migration failures in older schemas.

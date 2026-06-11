@@ -111,16 +111,16 @@ CREATE INDEX idx_dashboard_widgets_user ON dashboard_widgets(user_id, position);
 -- Hourly session demand (for prediction model)
 CREATE MATERIALIZED VIEW mv_hourly_session_demand AS
 SELECT 
-    DATE_TRUNC('hour', scheduled_at) as hour,
-    EXTRACT(DOW FROM scheduled_at) as day_of_week,
-    EXTRACT(HOUR FROM scheduled_at) as hour_of_day,
+    DATE_TRUNC('hour', scheduled_start) as hour,
+    EXTRACT(DOW FROM scheduled_start) as day_of_week,
+    EXTRACT(HOUR FROM scheduled_start) as hour_of_day,
     COUNT(*) as booking_count,
     COUNT(DISTINCT mentor_id) as active_mentors,
-    AVG(EXTRACT(EPOCH FROM (completed_at - scheduled_at))/60) as avg_duration_minutes
+    AVG(EXTRACT(EPOCH FROM (completed_at - scheduled_start))/60) as avg_duration_minutes
 FROM bookings
 WHERE status IN ('completed', 'confirmed')
-  AND scheduled_at >= CURRENT_DATE - INTERVAL '1 year'
-GROUP BY DATE_TRUNC('hour', scheduled_at), EXTRACT(DOW FROM scheduled_at), EXTRACT(HOUR FROM scheduled_at);
+  AND scheduled_start >= CURRENT_DATE - INTERVAL '1 year'
+GROUP BY DATE_TRUNC('hour', scheduled_start), EXTRACT(DOW FROM scheduled_start), EXTRACT(HOUR FROM scheduled_start);
 
 CREATE UNIQUE INDEX idx_mv_hourly_demand ON mv_hourly_session_demand(hour);
 
@@ -136,8 +136,8 @@ SELECT
     COUNT(DISTINCT r.id) as review_count,
     SUM(t.amount) as total_revenue,
     AVG(t.amount) as avg_session_price,
-    COUNT(DISTINCT b.learner_id) as unique_students,
-    MAX(b.scheduled_at) as last_session_date
+    COUNT(DISTINCT b.mentee_id) as unique_students,
+    MAX(b.scheduled_start) as last_session_date
 FROM users u
 LEFT JOIN bookings b ON u.id = b.mentor_id
 LEFT JOIN reviews r ON b.id = r.booking_id
@@ -168,7 +168,7 @@ GROUP BY DATE_TRUNC('day', created_at), EXTRACT(DOW FROM created_at),
 CREATE UNIQUE INDEX idx_mv_revenue_ts ON mv_revenue_time_series(date, currency);
 -- Optimize existing tables for analytics queries
 CREATE INDEX IF NOT EXISTS idx_transactions_created_status ON transactions(created_at DESC, status);
-CREATE INDEX IF NOT EXISTS idx_bookings_scheduled_status ON bookings(scheduled_at DESC, status);
+CREATE INDEX IF NOT EXISTS idx_bookings_scheduled_status ON bookings(scheduled_start DESC, status);
 CREATE INDEX IF NOT EXISTS idx_users_created_role ON users(created_at DESC, role) WHERE deleted_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_reviews_created_rating ON reviews(created_at DESC, rating);
 

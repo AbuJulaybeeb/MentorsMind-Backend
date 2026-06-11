@@ -19,8 +19,13 @@ if (redisConfig.clusterEnabled && redisConfig.clusterNodes) {
   );
 } else {
   const redisUrl = env.REDIS_URL ?? redisConfig.url ?? "redis://localhost:6379";
-  logger.info('Initializing single Redis instance:', { url: redisUrl });
-  redisClient = new Redis(redisUrl, redisConfig.options);
+  const isTls = redisUrl.startsWith("rediss://");
+  logger.info('Initializing single Redis instance:', { url: redisUrl, tls: isTls });
+  redisClient = new Redis(redisUrl, {
+    ...redisConfig.options,
+    // ioredis requires tls at top level, not nested under redisOptions
+    ...(isTls ? { tls: { rejectUnauthorized: false } } : {}),
+  });
 }
 
 export const redis = redisClient;

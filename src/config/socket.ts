@@ -69,7 +69,10 @@ function createAdapterClients(): { pubClient: Redis; subClient: Redis } | null {
     return null;
   }
 
-  const pubClient = new Redis(redisUrl, { lazyConnect: true });
+  const isTls = redisUrl.startsWith('rediss://');
+  const tlsOptions = isTls ? { tls: { rejectUnauthorized: false } } : {};
+
+  const pubClient = new Redis(redisUrl, { lazyConnect: true, ...tlsOptions });
   const subClient = pubClient.duplicate();
 
   pubClient.on('error', (err) => logger.error('Socket.IO pubClient error', { error: err }));

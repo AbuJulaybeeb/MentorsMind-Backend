@@ -5,8 +5,11 @@ FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+# Install pnpm (matches local toolchain)
+RUN npm install -g pnpm@9
+
+COPY package.json pnpm-lock.yaml* package-lock.json* ./
+RUN pnpm install --frozen-lockfile || npm install
 
 COPY . .
 RUN npm run build
@@ -33,7 +36,11 @@ USER appuser
 ENV PORT=5000
 EXPOSE 5000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||5000)+'/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+# Health check — skipped for worker service (no HTTP server)
+# The API service overrides this via railway.toml healthcheckPath
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||5000)+'/health/ready',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
-CMD ["node", "dist/server.js"]
+# Default entry point — bootstrap.ts loads secrets BEFORE server.ts is imported.
+# Worker service overrides this with: node dist/worker-bootstrap.js
+CMD ["node", "dist/bootstrap.js"]

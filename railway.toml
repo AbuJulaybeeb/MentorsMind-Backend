@@ -1,0 +1,23 @@
+# =============================================================================
+# Railway Deployment Configuration — MentorsMind API
+# Docs: https://docs.railway.app/reference/config-as-code
+# =============================================================================
+
+[build]
+# Use the existing multi-stage Dockerfile (builder → runner)
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# bootstrap.ts loads secrets (AWS / Vault / env) BEFORE server.ts is imported
+startCommand = "node dist/bootstrap.js"
+
+# Railway hits this endpoint to decide if the container is healthy before routing traffic
+healthcheckPath = "/health/ready"
+
+# Allow up to 5 minutes for the server to finish booting (migrations + JWKS init)
+healthcheckTimeout = 300
+
+# Restart on crash — up to 10 times before Railway gives up
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

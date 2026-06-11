@@ -12,22 +12,28 @@ import { env } from '../config/env';
 export async function blocklistMiddleware(req: Request, res: Response, next: NextFunction) {
   const ip = extractIpAddress(req);
   
-  const isBlocked = await IpFilterService.isIpBlocked(ip);
-  if (isBlocked) {
-    logger.warn({ ip, path: req.path }, 'Blocked request from blocked IP');
-    
-    // Log to audit logs for monitoring
-    await AuditLogService.log({
-      userId: 'system',
-      action: 'BLOCKED_IP_REQUEST',
-      resourceType: 'security',
-      resourceId: ip,
-      ipAddress: ip,
-      metadata: { path: req.path, method: req.method },
-    }).catch(err => logger.error({ err }, 'AuditLog error in blocklistMiddleware'));
-    
-    // Return Forbidden with no body as per requirement
-    return res.status(403).end();
+  try {
+    const isBlocked = await IpFilterService.isIpBlocked(ip);
+    if (isBlocked) {
+      logger.warn({ ip, path: req.path }, 'Blocked request from blocked IP');
+      
+      // Log to audit logs for monitoring
+      await AuditLogService.log({
+        userId: 'system',
+        action: 'BLOCKED_IP_REQUEST',
+        resourceType: 'security',
+        resourceId: ip,
+        ipAddress: ip,
+        metadata: { path: req.path, method: req.method },
+      }).catch(err => logger.error({ err }, 'AuditLog error in blocklistMiddleware'));
+      
+      // Return Forbidden with no body as per requirement
+      return res.status(403).end();
+    }
+  } catch (err) {
+    // Fail-open: if we can't reach the DB/cache, allow the request through.
+    // This prevents a DB cold-start from blocking all traffic.
+    logger.warn({ ip, path: req.path, err }, 'blocklistMiddleware: DB unavailable, failing open');
   }
   
   next();
