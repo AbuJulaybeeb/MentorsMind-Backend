@@ -23,11 +23,14 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Install pnpm for consistency
+RUN npm install -g pnpm@9
+
 RUN groupadd --gid 1001 appgroup \
   && useradd --uid 1001 --gid appgroup --shell /usr/sbin/nologin --create-home appuser
 
-COPY package*.json ./
-RUN npm install --omit=dev && npm cache clean --force
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --prod && pnpm store prune
 
 COPY --from=builder /app/dist ./dist
 
