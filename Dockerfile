@@ -12,7 +12,7 @@ COPY package.json pnpm-lock.yaml* package-lock.json* ./
 RUN pnpm install --frozen-lockfile || npm install
 
 COPY . .
-RUN npm run build
+RUN pnpm run build
 
 # -----------------------------------------------------------------------------
 # Stage 2 — runner: production image (Node slim, non-root, prod deps only)
