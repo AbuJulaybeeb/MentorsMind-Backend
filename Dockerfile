@@ -30,7 +30,7 @@ RUN groupadd --gid 1001 appgroup \
   && useradd --uid 1001 --gid appgroup --shell /usr/sbin/nologin --create-home appuser
 
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --prod && pnpm store prune
+RUN pnpm install --prod --ignore-scripts && pnpm store prune
 
 COPY --from=builder /app/dist ./dist
 
