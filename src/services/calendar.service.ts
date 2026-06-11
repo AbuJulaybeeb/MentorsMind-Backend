@@ -294,7 +294,7 @@ export const CalendarService = {
   /**
    * Build an OAuth2 client pre-loaded with a user's stored tokens
    */
-  async _buildAuthedClient(userId: string) {
+  async _buildAuthedClient(userId: string): Promise<InstanceType<typeof google.auth.OAuth2> | null> {
     const { rows } = await pool.query(
       `SELECT encrypted_access_token,
               encrypted_refresh_token,
