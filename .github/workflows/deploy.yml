@@ -14,6 +14,7 @@ concurrency:
 env:
   NODE_VERSION: "20"
   PNPM_VERSION: "9"
+  RAILWAY_ENVIRONMENT: "production"
 
 jobs:
   # ───────────────────────────────────────────────────────────────────────────
@@ -75,7 +76,7 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy API service
-        run: railway up --service mentorminds-api --detach
+        run: railway up --service mentorminds-api --detach --project ${{ secrets.RAILWAY_PROJECT_ID }} --environment ${{ env.RAILWAY_ENVIRONMENT }}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
@@ -97,6 +98,6 @@ jobs:
         run: npm install -g @railway/cli
 
       - name: Deploy Worker service
-        run: railway up --service mentorminds-worker --detach
+        run: railway up --service mentorminds-worker --detach --project ${{ secrets.RAILWAY_PROJECT_ID }} --environment ${{ env.RAILWAY_ENVIRONMENT }}
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

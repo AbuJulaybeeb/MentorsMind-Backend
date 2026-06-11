@@ -3,6 +3,10 @@
 # Docs: https://docs.railway.app/reference/config-as-code
 # =============================================================================
 
+[project]
+# Replace with your actual Railway Project ID (from project URL)
+id = "6e4d396f-3dd2-437f-9dea-f7d4bd113824"
+
 [build]
 # Use the existing multi-stage Dockerfile (builder → runner)
 builder = "DOCKERFILE"
