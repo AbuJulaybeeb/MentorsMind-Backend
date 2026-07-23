@@ -903,7 +903,7 @@ impl EscrowContract {
     /// - Escrow does not exist
     /// - Escrow is not in Disputed status
     /// - mentor_pct is greater than 100
-    pub fn resolve_dispute(env: Env, escrow_id: u64, release_to_mentor: bool) {
+    pub fn resolve_dispute(env: Env, escrow_id: u64, mentor_pct: u32) {
         // --- Admin auth ---
         let admin: Address = env.storage().persistent().get(&ADMIN).expect("Not initialized");
         env.storage().persistent().extend_ttl(&ADMIN, ESCROW_TTL_THRESHOLD, ESCROW_TTL_BUMP);
@@ -919,41 +919,48 @@ impl EscrowContract {
             panic!("Escrow is not in Disputed status");
         }
 
+        if mentor_pct > 100 {
+            panic!("mentor_pct cannot exceed 100");
+        }
+
         let now = env.ledger().timestamp();
 
-        if release_to_mentor {
-            Self::_do_release(&env, &mut escrow, &key);
-            escrow.status = EscrowStatus::Resolved;
-            escrow.resolved_at = now;
-            env.storage().persistent().set(&key, &escrow);
+        // --- Calculate split ---
+        let mentor_amount: i128 = escrow.amount
+            .checked_mul(mentor_pct as i128)
+            .expect("Overflow")
+            .checked_div(100)
+            .expect("Division error");
+        let learner_amount: i128 = escrow.amount
+            .checked_sub(mentor_amount)
+            .expect("Underflow");
 
-            env.events().publish(
-                (symbol_short!("Escrow"), symbol_short!("disp_res"), escrow_id),
-                (escrow_id, release_to_mentor, escrow.net_amount, 0i128, escrow.token_address.clone(), now),
+        // Debug-only assert to verify split
+        #[cfg(debug_assertions)]
+        assert_eq!(mentor_amount.checked_add(learner_amount).expect("Overflow"), escrow.amount);
+
+        // --- Transfer funds ---
+        let token_client = soroban_sdk::token::Client::new(&env, &escrow.token_address);
+        
+        if mentor_amount > 0 {
+            token_client.transfer(
+                &env.current_contract_address(),
+                &escrow.mentor,
+                &mentor_amount,
             );
-        } else {
-            let token_client = soroban_sdk::token::Client::new(&env, &escrow.token_address);
+        }
+        
+        if learner_amount > 0 {
             token_client.transfer(
                 &env.current_contract_address(),
                 &escrow.learner,
-                &escrow.amount,
-            );
-            escrow.status = EscrowStatus::Resolved;
-            escrow.net_amount = 0;
-            escrow.platform_fee = escrow.amount; // Repurposed for learner share
-            escrow.resolved_at = now;
-            env.storage().persistent().set(&key, &escrow);
-
-            env.events().publish(
-                (symbol_short!("Escrow"), symbol_short!("disp_res"), escrow_id),
-                (escrow_id, release_to_mentor, 0i128, escrow.amount, escrow.token_address.clone(), now),
+                &learner_amount,
             );
         }
 
         // --- Update escrow record ---
         // Reuse net_amount for mentor's awarded share and platform_fee for
         // learner's awarded share so callers can inspect the resolution on-chain.
-        let now = env.ledger().timestamp();
         escrow.status = EscrowStatus::Resolved;
         escrow.net_amount = mentor_amount;
         escrow.platform_fee = learner_amount; // repurposed: learner share in resolved state

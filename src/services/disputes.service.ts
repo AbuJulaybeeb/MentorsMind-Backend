@@ -218,7 +218,7 @@ export class DisputeService {
   static async resolveDispute(
     disputeId: string,
     adminId: string,
-    resolutionType: "full_refund" | "partial_refund" | "release",
+    mentorPct: number,
     notes: string,
   ): Promise<DisputeRecord> {
     const dispute = await DisputeModel.findById(disputeId);
@@ -243,23 +243,13 @@ export class DisputeService {
 
     // Execute escrow action + DB status update atomically
     const updated = await DatabaseService.withTransaction(async (client) => {
-      // 1. Call the real Soroban escrow contract
-      if (
-        resolutionType === "full_refund" ||
-        resolutionType === "partial_refund"
-      ) {
-        await SorobanEscrowService.refund({
-          escrowId: booking.escrow_id!,
-          refundedBy: adminId,
-          contractAddress: booking.escrow_contract_address ?? undefined,
-        });
-      } else {
-        await SorobanEscrowService.releaseFunds({
-          escrowId: booking.escrow_id!,
-          releasedBy: adminId,
-          contractAddress: booking.escrow_contract_address ?? undefined,
-        });
-      }
+      // 1. Call the real Soroban escrow contract's resolve_dispute
+      await SorobanEscrowService.resolveDispute({
+        escrowId: booking.escrow_id!,
+        splitPercentage: mentorPct,
+        resolvedBy: adminId,
+        contractAddress: booking.escrow_contract_address ?? undefined,
+      });
 
       // 2. Update dispute status inside the same transaction
       const result = await client.query<DisputeRecord>(
@@ -273,11 +263,11 @@ export class DisputeService {
     await AuditLogModel.create({
       level: "info",
       action: "dispute_resolved",
-      message: `Dispute ${disputeId} resolved by admin ${adminId} via ${resolutionType}`,
+      message: `Dispute ${disputeId} resolved by admin ${adminId} with mentorPct ${mentorPct}`,
       user_id: adminId,
       entity_type: "dispute",
       entity_id: disputeId,
-      metadata: { resolutionType, notes },
+      metadata: { mentorPct, notes },
       ip_address: null,
       user_agent: null,
     });
@@ -287,7 +277,7 @@ export class DisputeService {
       type: NotificationType.SYSTEM_ALERT,
       channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
       priority: NotificationPriority.HIGH,
-      data: { disputeId, event: "dispute_resolved", resolutionType },
+      data: { disputeId, event: "dispute_resolved", mentorPct },
     });
 
     // Notify the other party (mentor or mentee)
@@ -301,7 +291,7 @@ export class DisputeService {
         type: NotificationType.SYSTEM_ALERT,
         channels: [NotificationChannel.IN_APP, NotificationChannel.EMAIL],
         priority: NotificationPriority.HIGH,
-        data: { disputeId, event: "dispute_resolved", resolutionType },
+        data: { disputeId, event: "dispute_resolved", mentorPct },
       });
     }
 

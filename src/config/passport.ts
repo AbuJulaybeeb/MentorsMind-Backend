@@ -4,6 +4,15 @@ import { Strategy as GitHubStrategy, Profile as GitHubProfile } from 'passport-g
 import pool from './database';
 import { logger } from '../utils/logger';
 import { EncryptionUtil } from '../utils/encryption.utils';
+const fetch = require('node-fetch');
+
+// Custom error type for OAuth email required
+export class EmailRequiredError extends Error {
+    constructor() {
+        super('Email required');
+        this.name = 'EmailRequiredError';
+    }
+}
 
 // Types for OAuth profile
 interface OAuthProfile {
@@ -12,6 +21,14 @@ interface OAuthProfile {
     name: string | undefined;
     avatarUrl: string | undefined;
     provider: 'google' | 'github';
+}
+
+// Type for GitHub email API response
+interface GitHubEmail {
+    email: string;
+    verified: boolean;
+    primary: boolean;
+    visibility: string | null;
 }
 
 // Helper function to extract profile data
@@ -25,10 +42,36 @@ function extractGoogleProfile(profile: GoogleProfile): OAuthProfile {
     };
 }
 
-function extractGitHubProfile(profile: GitHubProfile): OAuthProfile {
+async function extractGitHubProfileWithEmail(profile: GitHubProfile, accessToken: string): Promise<OAuthProfile> {
+    let email = profile.emails?.[0]?.value;
+
+    // If no email in profile, fetch from GitHub API
+    if (!email) {
+        try {
+            const response = await fetch('https://api.github.com/user/emails', {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`,
+                    'User-Agent': 'mentorsmind-backend',
+                },
+            });
+            if (!response.ok) {
+                logger.error('Failed to fetch GitHub emails', { status: response.status, statusText: response.statusText });
+            } else {
+                const emails: GitHubEmail[] = await response.json();
+                // Find primary verified email
+                const verifiedEmail = emails.find(e => e.primary && e.verified) || emails.find(e => e.verified);
+                if (verifiedEmail) {
+                    email = verifiedEmail.email;
+                }
+            }
+        } catch (error) {
+            logger.error('Error fetching GitHub emails', { error });
+        }
+    }
+
     return {
         id: profile.id,
-        email: profile.emails?.[0]?.value,
+        email,
         name: profile.displayName || profile.username,
         avatarUrl: profile.photos?.[0]?.value,
         provider: 'github',
@@ -55,38 +98,42 @@ async function findOrCreateUser(profile: OAuthProfile): Promise<{ userId: string
             return { userId: oauthResult.rows[0].user_id, isNew: false };
         }
 
+        // If no email, throw EmailRequiredError
+        if (!profile.email) {
+            await client.query('ROLLBACK');
+            throw new EmailRequiredError();
+        }
+
         // Check if user exists by email (if email is provided)
-        if (profile.email) {
-            const userQuery = `SELECT id FROM users WHERE email = $1 AND deleted_at IS NULL`;
-            const userResult = await client.query(userQuery, [profile.email]);
+        const userQuery = `SELECT id FROM users WHERE email = $1 AND deleted_at IS NULL`;
+        const userResult = await client.query(userQuery, [profile.email]);
 
-            if (userResult.rows.length > 0) {
-                // User exists, link OAuth account
-                const userId = userResult.rows[0].id;
+        if (userResult.rows.length > 0) {
+            // User exists, link OAuth account
+            const userId = userResult.rows[0].id;
 
-                const insertOAuthQuery = `
+            const insertOAuthQuery = `
           INSERT INTO oauth_accounts (user_id, provider, provider_account_id, provider_email, provider_name, provider_avatar_url)
           VALUES ($1, $2, $3, $4, $5, $6)
         `;
-                await client.query(insertOAuthQuery, [
-                    userId,
-                    profile.provider,
-                    profile.id,
-                    profile.email,
-                    profile.name,
-                    profile.avatarUrl,
-                ]);
+            await client.query(insertOAuthQuery, [
+                userId,
+                profile.provider,
+                profile.id,
+                profile.email,
+                profile.name,
+                profile.avatarUrl,
+            ]);
 
-                // Update user's email_verified status if not already verified
-                await client.query(
-                    `UPDATE users SET email_verified = true, email_verified_at = NOW() WHERE id = $1 AND email_verified = false`,
-                    [userId]
-                );
+            // Update user's email_verified status if not already verified
+            await client.query(
+                `UPDATE users SET email_verified = true, email_verified_at = NOW() WHERE id = $1 AND email_verified = false`,
+                [userId]
+            );
 
-                await client.query('COMMIT');
-                logger.info(`Linked ${profile.provider} OAuth account to existing user`, { userId, provider: profile.provider });
-                return { userId, isNew: false };
-            }
+            await client.query('COMMIT');
+            logger.info(`Linked ${profile.provider} OAuth account to existing user`, { userId, provider: profile.provider });
+            return { userId, isNew: false };
         }
 
         // Create new user
@@ -107,7 +154,7 @@ async function findOrCreateUser(profile: OAuthProfile): Promise<{ userId: string
         const lastName = nameParts.slice(1).join(' ') || '';
 
         const userResult = await client.query(insertUserQuery, [
-            profile.email || `${profile.provider}_${profile.id}@placeholder.com`,
+            profile.email,
             passwordHash,
             firstName,
             lastName,
@@ -137,7 +184,10 @@ async function findOrCreateUser(profile: OAuthProfile): Promise<{ userId: string
         return { userId, isNew: true };
 
     } catch (error) {
-        await client.query('ROLLBACK');
+        // Don't rollback twice if already rolled back
+        if (!(error instanceof EmailRequiredError)) {
+            await client.query('ROLLBACK');
+        }
         logger.error('Error in findOrCreateUser', { error, provider: profile.provider });
         throw error;
     } finally {
@@ -158,6 +208,10 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
             async (accessToken: string, refreshToken: string, profile: GoogleProfile, done: any) => {
                 try {
                     const oauthProfile = extractGoogleProfile(profile);
+                    // Google should always provide an email, check and throw error if not
+                    if (!oauthProfile.email) {
+                        throw new EmailRequiredError();
+                    }
                     const result = await findOrCreateUser(oauthProfile);
 
                     // Store tokens in oauth_accounts table (encrypted at rest)
@@ -200,7 +254,7 @@ if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
             },
             async (accessToken: string, refreshToken: string, profile: GitHubProfile, done: any) => {
                 try {
-                    const oauthProfile = extractGitHubProfile(profile);
+                    const oauthProfile = await extractGitHubProfileWithEmail(profile, accessToken);
                     const result = await findOrCreateUser(oauthProfile);
 
                     // Store tokens in oauth_accounts table (encrypted at rest)

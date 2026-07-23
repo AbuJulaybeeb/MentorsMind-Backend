@@ -68,20 +68,18 @@ export class DisputesController {
   static async resolveDispute(req: Request, res: Response): Promise<void> {
     try {
       const id = routeParam(req.params.id);
-      const { resolution_type, notes } = req.body;
+      const { mentor_pct, notes } = req.body;
       const adminId = (req as any).user?.id || "temp_admin_id";
 
-      if (
-        !["full_refund", "partial_refund", "release"].includes(resolution_type)
-      ) {
-        res.status(400).json({ error: "Invalid resolution type" });
+      if (mentor_pct === undefined || mentor_pct < 0 || mentor_pct > 100) {
+        res.status(400).json({ error: "Valid mentor_pct (0-100) is required" });
         return;
       }
 
       const dispute = await DisputeService.resolveDispute(
         id,
         adminId,
-        resolution_type,
+        mentor_pct,
         notes,
       );
       res.status(200).json({ data: dispute });
