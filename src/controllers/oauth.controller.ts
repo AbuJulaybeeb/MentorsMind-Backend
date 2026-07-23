@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import passport from '../config/passport';
+import passport, { EmailRequiredError } from '../config/passport';
 import { env } from '../config/env';
 import { TokenService } from '../services/token.service';
 import { AuditLogService, extractIpAddress } from '../services/auditLog.service';
@@ -26,6 +26,9 @@ export const OAuthController = {
         passport.authenticate('google', { session: false }, async (err: any, user: any) => {
             if (err) {
                 logger.error('Google OAuth callback error', { error: err.message });
+                if (err instanceof EmailRequiredError) {
+                    return res.redirect(`${env.FRONTEND_URL || 'http://localhost:3000'}/auth/error?provider=google&error=email_required`);
+                }
                 return res.redirect(`${env.FRONTEND_URL || 'http://localhost:3000'}/auth/error?provider=google`);
             }
 
@@ -86,6 +89,9 @@ export const OAuthController = {
         passport.authenticate('github', { session: false }, async (err: any, user: any) => {
             if (err) {
                 logger.error('GitHub OAuth callback error', { error: err.message });
+                if (err instanceof EmailRequiredError) {
+                    return res.redirect(`${env.FRONTEND_URL || 'http://localhost:3000'}/auth/error?provider=github&error=email_required`);
+                }
                 return res.redirect(`${env.FRONTEND_URL || 'http://localhost:3000'}/auth/error?provider=github`);
             }
 

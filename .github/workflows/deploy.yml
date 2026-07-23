@@ -48,6 +48,9 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
+      - name: Validate migrations
+        run: pnpm run migrate:validate
+
       - name: Build
         run: pnpm run build
 

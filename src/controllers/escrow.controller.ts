@@ -125,11 +125,11 @@ export const EscrowController = {
   /** POST /api/v1/escrow/:id/resolve - Resolve dispute (admin only) */
   async resolveDispute(req: AuthenticatedRequest, res: Response): Promise<void> {
     const { id } = req.params;
-    const { resolution, notes, stellarTxHash } = req.body as ResolveDisputeInput;
+    const { mentor_pct, notes, stellarTxHash } = req.body as ResolveDisputeInput;
 
     try {
       const oldEscrow = await EscrowApiService.getEscrowById(id);
-      const escrow = await EscrowApiService.resolveDispute(id, resolution, notes, stellarTxHash);
+      const escrow = await EscrowApiService.resolveDispute(id, mentor_pct, notes, stellarTxHash);
       
       // Log dispute resolution (admin action)
       await AuditLogService.log({
@@ -138,7 +138,7 @@ export const EscrowController = {
         resourceType: 'escrow',
         resourceId: id,
         oldValue: { status: oldEscrow?.status },
-        newValue: { status: escrow.status, resolution, notes },
+        newValue: { status: escrow.status, mentor_pct, notes },
         ipAddress: extractIpAddress(req),
         userAgent: req.headers['user-agent'] || null,
         metadata: { adminAction: true },

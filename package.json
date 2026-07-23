@@ -19,6 +19,8 @@
     "migrate:up": "node-pg-migrate up --database-url-var DATABASE_URL --migrations-dir database/migrations",
     "migrate:down": "node-pg-migrate down --database-url-var DATABASE_URL --migrations-dir database/migrations",
     "migrate:create": "node-pg-migrate create --migrations-dir database/migrations",
+    "migrate:validate": "ts-node database/validate-migrations.ts",
+    "migrate:renumber": "ts-node database/renumber-migrations.ts",
     "docker:build": "docker compose build",
     "docker:dev": "docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
     "sync:elasticsearch": "ts-node scripts/sync-elasticsearch.ts",
