@@ -20,6 +20,7 @@ import {
 import { NotificationType } from "../models/notifications.model";
 import { SessionSummaryModel } from "../models/session-summary.model";
 import { MentorsService } from "./mentors.service";
+import { AssetExchangeService } from "./assetExchange.service";
 
 export interface CreateBookingData {
   menteeId: string;
@@ -146,6 +147,19 @@ export const BookingsService = {
     const hourlyRate = mentorProfile.hourly_rate;
     const amount = ((data.durationMinutes / 60) * hourlyRate).toFixed(7);
 
+    // Best-effort USD equivalent (oracle preferred, SDEX fallback via
+    // AssetExchangeService). Never blocks booking creation on failure.
+    let usdEquivalent: string | null = null;
+    try {
+      const rate = await AssetExchangeService.getRate("XLM", "USDC");
+      usdEquivalent = (parseFloat(amount) * parseFloat(rate.rate)).toFixed(2);
+    } catch (error) {
+      logger.warn("Failed to compute USD equivalent for booking amount", {
+        mentorId: data.mentorId,
+        error: error instanceof Error ? error.message : error,
+      });
+    }
+
     // Create booking
     const booking = await BookingModel.create({
       menteeId: data.menteeId,
@@ -156,6 +170,7 @@ export const BookingsService = {
       notes: data.notes,
       amount,
       currency: "XLM",
+      usdEquivalent,
     });
 
     return booking;
