@@ -3,7 +3,7 @@ import { BookingsController } from "../controllers/bookings.controller";
 import { CollaborationController } from "../controllers/collaboration.controller";
 import { authenticate } from "../middleware/auth.middleware";
 import { requireRole } from "../middleware/rbac.middleware";
-import { idempotency } from "../middleware/idempotency.middleware";
+import { requireIdempotency } from "../middleware/idempotency.middleware";
 import { validate } from "../middleware/validation.middleware";
 import { createBookingSchema } from "../validators/schemas/bookings.schemas";
 import {
@@ -41,7 +41,7 @@ const router = Router();
 router.post(
   "/",
   authenticate,
-  idempotency,
+  requireIdempotency,
   validate(createBookingSchema),
   BookingsController.createBooking,
 );
@@ -234,7 +234,12 @@ router.delete("/:id/cancel", authenticate, BookingsController.cancelBooking);
  *                       type: string
  *                       example: Meeting room creation failed. Manual intervention required.
  */
-router.post("/:id/confirm", authenticate, BookingsController.confirmBooking);
+router.post(
+  "/:id/confirm",
+  authenticate,
+  requireIdempotency,
+  BookingsController.confirmBooking,
+);
 
 /**
  * @swagger
