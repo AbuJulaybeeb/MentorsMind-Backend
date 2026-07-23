@@ -67,6 +67,27 @@ router.get(
 
 /**
  * @swagger
+ * /loyalty/status:
+ *   get:
+ *     summary: Get current user's loyalty status (points, tier, next tier, discount)
+ *     tags: [Loyalty]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Loyalty status
+ */
+router.get(
+  "/status",
+  authenticate,
+  asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+    const status = await LoyaltyService.getStatus(req.user!.userId);
+    res.json({ success: true, data: status });
+  }),
+);
+
+/**
+ * @swagger
  * /loyalty/earn:
  *   post:
  *     summary: Earn loyalty tokens for an action
