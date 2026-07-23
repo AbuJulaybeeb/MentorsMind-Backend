@@ -50,6 +50,7 @@ export const QUEUE_NAMES = {
   MAINTENANCE: "maintenance-queue",
   TRANSCRIPTION: "transcription-queue",
   BULK: "bulk-queue",
+  DOMAIN_EVENTS: "domain-events-queue",
 } as const;
 
 export type QueueName = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];
