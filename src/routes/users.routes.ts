@@ -4,6 +4,7 @@ import { DataExportController } from "../controllers/dataExport.controller";
 import { authenticate } from "../middleware/auth.middleware";
 import { requireOwnerOrAdmin } from "../middleware/rbac.middleware";
 import { validate } from "../middleware/validation.middleware";
+import { screenBio } from "../middleware/content-moderation.middleware";
 import { asyncHandler } from "../utils/asyncHandler.utils";
 import {
   updateUserSchema,
@@ -92,6 +93,7 @@ router.get("/me", asyncHandler(UsersController.getMe));
 router.put(
   "/me",
   validate(updateMeSchema),
+  screenBio,
   asyncHandler(UsersController.updateMe),
 );
 

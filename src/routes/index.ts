@@ -71,6 +71,7 @@ router.use("/admin", adminRoutes);
 router.use("/admin/moderation", moderationRoutes);
 router.use("/bookings", smartSchedulingRoutes);
 router.use("/user/moderation", userModerationRoutes);
+router.use("/moderation", userModerationRoutes);
 router.use("/bookings", bookingsRoutes);
 router.use("/timezones", timezoneRoutes);
 router.use("/mentors", mentorsRoutes);
