@@ -17,6 +17,7 @@ const REQUIRED_QUEUE_NAMES = [
     'NOTIFICATION_CLEANUP',
     'MAINTENANCE',
     'TRANSCRIPTION',
+    'DOMAIN_EVENTS',
 ] as const;
 
 for (const queueKey of REQUIRED_QUEUE_NAMES) {
@@ -44,3 +45,4 @@ export { escrowCheckWorker } from '../jobs/escrowCheck.worker';
 export { notificationsWorker } from '../jobs/notifications.worker';
 export { webhookDeliveryWorker } from '../jobs/webhookDelivery.job';
 export { transcriptionWorker } from './transcription.worker';
+export { domainEventsWorker } from './domain-events.worker';
