@@ -17,6 +17,8 @@ export class DisputeService {
     filedById: string,
     type: "payment" | "quality" | "conduct" | "cancellation",
     reason: string,
+    ipAddress: string | null = null,
+    userAgent: string | null = null
   ): Promise<DisputeRecord> {
     const { rows: bookingRows } = await pool.query<{
       mentor_id: string;
@@ -46,8 +48,8 @@ export class DisputeService {
       entity_type: "dispute",
       entity_id: dispute.id,
       metadata: { reason, type },
-      ip_address: null,
-      user_agent: null,
+      ip_address: ipAddress,
+      user_agent: userAgent,
     });
 
     const openedNotifications = [
@@ -81,9 +83,19 @@ export class DisputeService {
   static async uploadEvidence(
     disputeId: string,
     userId: string,
+    userRole: string,
     textContent?: string,
     fileUrl?: string,
+    ipAddress: string | null = null,
+    userAgent: string | null = null
   ) {
+    const dispute = await DisputeModel.findById(disputeId);
+    if (!dispute) throw new Error("Dispute not found");
+
+    if (dispute.filed_by_id !== userId && dispute.respondent_id !== userId && userRole !== "admin") {
+      throw new Error("Unauthorized: You are not a party to this dispute");
+    }
+
     const evidence = await DisputeModel.addEvidence({
       dispute_id: disputeId,
       submitter_id: userId,
@@ -100,8 +112,8 @@ export class DisputeService {
       entity_type: "dispute_evidence",
       entity_id: evidence.id,
       metadata: { file_attached: !!fileUrl },
-      ip_address: null,
-      user_agent: null,
+      ip_address: ipAddress,
+      user_agent: userAgent,
     });
 
     return evidence;
@@ -182,6 +194,8 @@ export class DisputeService {
     disputeId: string,
     adminId: string,
     notes: string,
+    ipAddress: string | null = null,
+    userAgent: string | null = null
   ): Promise<DisputeRecord> {
     const dispute = await DisputeModel.findById(disputeId);
     if (!dispute) throw new Error("Dispute not found");
@@ -202,8 +216,8 @@ export class DisputeService {
       entity_type: "dispute",
       entity_id: disputeId,
       metadata: { notes },
-      ip_address: null,
-      user_agent: null,
+      ip_address: ipAddress,
+      user_agent: userAgent,
     });
 
     return updated!;
@@ -220,6 +234,8 @@ export class DisputeService {
     adminId: string,
     mentorPct: number,
     notes: string,
+    ipAddress: string | null = null,
+    userAgent: string | null = null
   ): Promise<DisputeRecord> {
     const dispute = await DisputeModel.findById(disputeId);
     if (!dispute) throw new Error("Dispute not found");
@@ -268,8 +284,8 @@ export class DisputeService {
       entity_type: "dispute",
       entity_id: disputeId,
       metadata: { mentorPct, notes },
-      ip_address: null,
-      user_agent: null,
+      ip_address: ipAddress,
+      user_agent: userAgent,
     });
 
     await NotificationService.sendNotification({
