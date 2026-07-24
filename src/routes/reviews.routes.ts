@@ -2,6 +2,7 @@ import { Router, IRouter } from "express";
 import { ReviewsController } from "../controllers/reviews.controller";
 import { authenticate } from "../middleware/auth.middleware";
 import { requireAdmin } from "../middleware/rbac.middleware";
+import { screenReview } from "../middleware/content-moderation.middleware";
 import {
   validate,
   createReviewSchema,
@@ -49,6 +50,7 @@ router.post(
   "/",
   authenticate,
   validate(createReviewSchema),
+  screenReview,
   ReviewsController.createReview,
 );
 
@@ -125,6 +127,7 @@ router.put(
   authenticate,
   validate(reviewIdParamSchema),
   validate(updateReviewSchema),
+  screenReview,
   ReviewsController.updateReview,
 );
 

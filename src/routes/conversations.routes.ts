@@ -2,6 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import { ConversationsController } from '../controllers/conversations.controller';
 import { authenticate } from '../middleware/auth.middleware';
+import { screenMessage } from '../middleware/content-moderation.middleware';
 import { asyncHandler } from '../utils/asyncHandler.utils';
 
 const router = Router();
@@ -120,7 +121,7 @@ router.get('/:id/messages', authenticate, asyncHandler(ConversationsController.g
  *       201:
  *         description: Message sent
  */
-router.post('/:id/messages', authenticate, asyncHandler(ConversationsController.sendMessage));
+router.post('/:id/messages', authenticate, screenMessage, asyncHandler(ConversationsController.sendMessage));
 
 /**
  * @swagger
