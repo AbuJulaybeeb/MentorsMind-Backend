@@ -33,6 +33,7 @@ import { createSocketServer } from "./config/socket";
 import { initializeSocketService } from "./services/socket.service";
 import { initializeGraphQL } from "./graphql/server";
 import { stellarMonitorJob } from "./jobs/stellarMonitor.job";
+import backupJob from "./jobs/backup.job";
 import {
   emailWorker,
   paymentWorker,
@@ -137,6 +138,9 @@ stellarMonitorJob.start().catch((err) => {
   logger.error("Failed to start Horizon SSE monitor", { error: err });
 });
 
+// Start scheduled database backup jobs (daily full, hourly WAL, retention)
+backupJob.initialize();
+
 // Start background exchange rate refresh
 import("./services/assetExchange.service")
   .then(({ AssetExchangeService }) => {
@@ -162,6 +166,7 @@ server.listen(PORT, () => {
 async function shutdown(signal: string) {
   logger.info({ signal }, "Signal received: closing HTTP server");
   stellarMonitorJob.stop();
+  backupJob.stop();
   await Promise.all([
     emailWorker.close(),
     paymentWorker.close(),

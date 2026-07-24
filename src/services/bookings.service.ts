@@ -20,7 +20,7 @@ import {
 import { NotificationType } from "../models/notifications.model";
 import { SessionSummaryModel } from "../models/session-summary.model";
 import { MentorsService } from "./mentors.service";
-import { AssetExchangeService } from "./assetExchange.service";
+import { LoyaltyService } from "./loyalty.service";
 
 export interface CreateBookingData {
   menteeId: string;
@@ -465,6 +465,19 @@ export const BookingsService = {
       bookingId,
       status: "completed",
       updatedAt: updated.updated_at,
+    });
+
+    // Fire-and-forget: Award loyalty points for the completed session
+    LoyaltyService.accruePointsForCompletion(
+      booking.mentee_id,
+      bookingId,
+      booking.duration_minutes,
+    ).catch((err) => {
+      logger.warn("Failed to accrue loyalty points", {
+        bookingId,
+        menteeId: booking.mentee_id,
+        error: err,
+      });
     });
 
     // Fire-and-forget: Generate AI session summary

@@ -29,6 +29,7 @@ import {
 } from "../config/stellar";
 import { EncryptionUtil } from "../utils/encryption.utils";
 import { PaginationUtil } from "../utils/pagination.utils";
+import { LoyaltyService } from "./loyalty.service";
 
 export type PaymentStatus =
   | "pending"
@@ -105,7 +106,10 @@ export const PaymentsService = {
     if (booking.payment_status === "paid")
       throw createError("Booking is already paid", 409);
 
-    const platformFee = (parseFloat(amount) * PLATFORM_FEE_PCT).toFixed(7);
+    // Loyalty tier reduces the effective platform fee (issue #680)
+    const discountBps = await LoyaltyService.getDiscountBps(userId);
+    const effectiveFeePct = PLATFORM_FEE_PCT * (1 - discountBps / 10000);
+    const platformFee = (parseFloat(amount) * effectiveFeePct).toFixed(7);
 
     // Resolve asset metadata
     const assetDef = SUPPORTED_ASSETS[currency.toUpperCase()];
